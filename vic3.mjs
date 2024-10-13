@@ -94,7 +94,7 @@ class Vic3 {
             }
             this.dt = (timestamp - this.previous)/1000.0;
             this.previous = timestamp;
-            this.wasm.instance.exports.draw(this.dt);
+            this.wasm.instance.exports.draw(this.focused ? this.dt : Math.min(this.dt, 1 / 60)); // TODO: create separate update function
             const buffer = this.wasm.instance.exports.memory.buffer;
             const width = new Uint32Array(buffer, this.canvasPtr, 1)[0];
             const height = new Uint32Array(buffer, this.canvasPtr + 4, 1)[0];
@@ -111,9 +111,6 @@ class Vic3 {
     }
     fmodf(a, b) {
         return a % b;
-    }
-    getFrameTime() {
-        return Math.min(this.dt, 1.0 / 60); // TODO: watch for window.blur events and prevent huge dt values
     }
     beginDrawing(canvasPtr) {
         this.canvasPtr = canvasPtr;
