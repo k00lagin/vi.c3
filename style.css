@@ -1,0 +1,73 @@
+:root,
+body {
+    background-color: rgb(var(--black) / 100%);
+    color: rgb(var(--white) / 100%);
+    font-family: 'VT323', monospace;
+    height: 100%;
+
+    --white: 230 200 200;
+    --black: 8 8 18;
+    --red: 236 72 153;
+}
+
+body {
+    display: flex;
+    flex-flow: row nowrap;
+    margin: 0;
+    overflow: hidden;
+}
+
+aside {
+    width: 18rem;
+    flex-shrink: 0;
+    border-right: 0.5px solid rgb(var(--white) / 10%);
+}
+
+aside nav ul {
+    list-style: none;
+    display: flex;
+    flex-flow: column nowrap;
+    gap: 0.5rem;
+}
+
+main {
+    display: flex;
+    flex-flow: column nowrap;
+    gap: 1rem;
+    align-items: center;
+    flex-grow: 1;
+    padding: 0 3rem 1rem;
+    overscroll-behavior: none;
+    overflow: auto;
+}
+
+h1, h2, h3, p {
+    width: 100%;
+}
+
+a {
+    color: var(--white);
+    font-weight: 600;
+}
+a:hover {
+    color: color-mix(in srgb, rgb(var(--white) / 100%) 50%, rgb(var(--red) / 100%));
+}
+a:active {
+    color: rgb(var(--red) / 100%);
+}
+
+canvas {
+    border: 0.5px solid rgb(var(--white) / 10%);
+}
+
+canvas:focus {
+    outline: 1px solid rgb(var(--red) / 50%);
+}
+
+blockquote.warning {
+    margin: 0 1rem;
+    width: calc(100% - 2rem);
+    background-color: rgb(var(--red) / 10%);
+    border-left: 4px solid rgb(var(--red) / 100%);
+    padding: 1rem;
+}
