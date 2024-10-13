@@ -6,12 +6,13 @@
     "scripts": {
         "build": "node build.js",
         "watch": "node --watch-path=./demos build.js",
-        "serve": "http-server -p 7103 -a 127.0.0.1 --gzip --silent -c-1 -d false",
-        "dev": "yarn watch && yarn serve"
+        "serve": "npx http-server -p 7103 -a 127.0.0.1 --gzip --silent -c-1 -d false -o",
+        "dev": "concurrently \"yarn watch\" \"yarn serve\""
     },
     "author": "Vsevolod Kulagin <k00lagin@gmail.com>",
     "license": "MIT",
     "devDependencies": {
+        "concurrently": "^9.0.1",
         "http-server": "^14.1.1",
         "typescript": "^5.4.5"
     },
