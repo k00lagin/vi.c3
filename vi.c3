@@ -9,6 +9,16 @@ struct Canvas {
     usz height;
     Color[*] pixels;
 }
+Canvas *defaultCanvas;
+Canvas *currentCanvas;
+
+extern fn void connectCanvas(Canvas *canvas) @export("connectCanvas") @wasm;
+fn Canvas *initWindow(usz width, usz height) {
+    defaultCanvas = newCanvas(width, height);
+    currentCanvas = defaultCanvas;
+    connectCanvas(defaultCanvas);
+    return defaultCanvas;
+}
 
 fn Color hsvToRGB(float hue, float saturation, float value, float alpha) { // h: 0-360, s: 0-1, v: 0-1, a: 0-1
     char r, g, b;
@@ -40,18 +50,15 @@ fn Color hsvToRGB(float hue, float saturation, float value, float alpha) { // h:
     return Color { r, g, b, (char)(alpha * 255) };
 }
 
-fn Canvas *allocateCanvas(usz width, usz height) {
+fn Canvas *newCanvas(usz width, usz height) {
     Canvas *canvas = mem::calloc(Canvas.sizeof + width * height * Color.sizeof);
     canvas.width = width;
     canvas.height = height;
     for (usz i = 0; i < width * height; i++) {
-        canvas.pixels[i] = Color { 0, 0, 0, 255 };
+        canvas.pixels[i] = Color { 0, 0, 0, 0 };
     }
     return canvas;
 }
-
-extern fn void Canvas.beginDrawing(&canvas) @export("beginDrawing") @wasm;
-extern fn float Canvas.getFrameTime(&canvas) @export("getFrameTime") @wasm;
 
 fn void Canvas.clearBackground(&canvas, Color color) {
     for (usz i = 0; i < canvas.width * canvas.height; i++) {
@@ -133,6 +140,16 @@ fn void Canvas.drawRectangleLines(&canvas, int posX, int posY, int width, int he
         canvas.drawPixel(posX + x, posY + height - 1, color);
     }
 }
+
+fn void clearBackground(Color color) { Canvas.clearBackground(currentCanvas, color); }
+fn void drawPixel(int x, int y, Color color) { Canvas.drawPixel(currentCanvas, x, y, color); }
+fn void drawPixelV(IntVector2 position, Color color) { Canvas.drawPixelV(currentCanvas, position, color); }
+fn void drawCircle(int centerX, int centerY, float radius, Color color) { Canvas.drawCircle(currentCanvas, centerX, centerY, radius, color); }
+fn void drawRectangle(int posX, int posY, int width, int height, Color color) { Canvas.drawRectangle(currentCanvas, posX, posY, width, height, color); }
+fn void drawRectangleV(IntVector2 position, IntVector2 size, Color color) { Canvas.drawRectangleV(currentCanvas, position, size, color); }
+fn void drawRectangleLines(int posX, int posY, int width, int height, Color color) { Canvas.drawRectangleLines(currentCanvas, posX, posY, width, height, color); }
+
+fn void setCanvas(Canvas *canvas) { currentCanvas = canvas; }
 
 module vi::kb;
 

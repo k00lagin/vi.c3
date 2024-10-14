@@ -96,7 +96,8 @@ class Vic3 {
             }
             this.dt = (timestamp - this.previous)/1000.0;
             this.previous = timestamp;
-            this.wasm.instance.exports.draw(this.focused ? this.dt : Math.min(this.dt, 1 / 60)); // TODO: create separate update function
+            this.wasm.instance.exports.draw(Math.min(this.dt, 1 / 60)); // TODO: introduce less hacky way to limit dt
+            // TODO: create separate update function
             const buffer = this.wasm.instance.exports.memory.buffer;
             const pixels = new Uint8ClampedArray(buffer, this.canvasPtr + 8, this.canvasWidth * this.canvasHeight * 4);
             this.ctx.putImageData(new ImageData(pixels, this.canvasWidth, this.canvasHeight), 0, 0);
@@ -110,7 +111,7 @@ class Vic3 {
     fmodf(a, b) {
         return a % b;
     }
-    beginDrawing(canvasPtr) {
+    connectCanvas(canvasPtr) {
         this.canvasPtr = canvasPtr;
         const buffer = this.wasm.instance.exports.memory.buffer;
         this.canvasWidth = new Uint32Array(buffer, canvasPtr, 1)[0];

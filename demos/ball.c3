@@ -1,8 +1,6 @@
 // Based on Alexey Kutepov's https://github.com/tsoding/zozlib.js/blob/main/examples/tsoding_ball.c
 import vi;
 
-Canvas *canvas = null;
-
 const WIDTH = 800;
 const HEIGHT = 600;
 
@@ -15,7 +13,7 @@ Color ball_color;
 float ball_hue;
 
 fn void draw(float dt) @export("draw") @wasm {
-	canvas.clearBackground(Color { 8, 8, 18, 255 });
+	vi::clearBackground(Color { 8, 8, 18, 255 });
 	ball_velocity.y += GRAVITY * dt;
 	float x = ball_position.x + ball_velocity.x * dt;
 	if (x - BALL_RADIUS < 0 || x + BALL_RADIUS >= WIDTH) {
@@ -33,7 +31,7 @@ fn void draw(float dt) @export("draw") @wasm {
 	} else {
 		ball_position.y = y;
 	}
-	canvas.drawCircle((int)ball_position.x, (int)ball_position.y, BALL_RADIUS, ball_color);
+	vi::drawCircle((int)ball_position.x, (int)ball_position.y, BALL_RADIUS, ball_color);
 }
 
 fn void main() @export("main") @wasm {
@@ -41,6 +39,5 @@ fn void main() @export("main") @wasm {
 	ball_hue = js::getRandomValue(0, 360);
 	ball_color = vi::hsvToRGB(ball_hue, 0.7, 0.55, 1);
 
-	canvas = vi::allocateCanvas(WIDTH, HEIGHT);
-    canvas.beginDrawing();
+	vi::initWindow(WIDTH, HEIGHT);
 }
