@@ -61,8 +61,8 @@ canvas {
 }
 
 canvas:focus {
-    border: 0.5px solid rgb(var(--red) / 50%);
-    outline: 1px solid rgb(var(--red) / 50%);
+    border: 1px solid rgb(var(--red) / 100%);
+    outline: 2px solid rgb(var(--red) / 100%);
 }
 
 blockquote.warning {

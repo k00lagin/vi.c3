@@ -10,11 +10,20 @@ const demos = [
         name: "input-keys",
         sources: ["./demos/input-keys.c3", "./vi.c3"],
         out: "./build/input-keys"
+    },
+    {
+        name: "lines",
+        sources: ["./demos/lines.c3", "./vi.c3"],
+        out: "./build/lines"
+    },
+    {
+        name: "retro",
+        sources: ["./demos/retro.c3", "./vi.c3"],
+        out: "./build/retro"
     }
 ]
 
 /**
- * 
  * @param {string} program 
  * @param {string[]} args 
  * @returns {ReturnType<typeof spawn>}

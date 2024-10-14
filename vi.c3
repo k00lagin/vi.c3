@@ -1,8 +1,27 @@
 module vi;
 
+import std::math;
+
 def Color = char[<4>];
 def Vector2 = float[<2>];
 def IntVector2 = int[<2>];
+
+// C3 implementation of swap macro
+// looks fine, but not working for some reason in my particular case
+// macro void @swap(&x, &y)
+// {
+// 	var t = *x;
+
+// 	*x = *y;
+// 	*y = t;
+// }
+
+fn void swap(int* x, int* y) {
+    int t = *x;
+    *x = *y;
+    *y = t;
+}
+
 
 struct Canvas {
     usz width;
@@ -141,6 +160,42 @@ fn void Canvas.drawRectangleLines(&canvas, int posX, int posY, int width, int he
     }
 }
 
+// Draw a line
+fn void Canvas.drawLine(&canvas, int x1, int y1, int x2, int y2, Color color) @export("drawLine") @wasm {
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+
+    // If both of the differences are 0 there will be a division by 0 below.
+    if (dx == 0 && dy == 0) {
+        canvas.drawPixel(x1, y1, color);
+        return;
+    }
+
+    if (math::abs(dx) > math::abs(dy)) {
+        if (x1 > x2) {
+            swap(&x1, &x2);
+            swap(&y1, &y2);
+        }
+
+        for (int x = x1; x <= x2; ++x) {
+            int y = dy*(x - x1)/dx + y1;
+            // TODO: move boundary checks out side of the loops in olivec_draw_line
+            canvas.drawPixel(x, y, color);
+        }
+    } else {
+        if (y1 > y2) {
+            swap(&x1, &x2);
+            swap(&y1, &y2);
+        }
+
+        for (int y = y1; y <= y2; ++y) {
+            int x = dx*(y - y1)/dy + x1;
+            // TODO: move boundary checks out side of the loops in olivec_draw_line
+            canvas.drawPixel(x, y, color);
+        }
+    }
+}
+
 fn void Canvas.drawText(&canvas, char *text, int posX, int posY, int fontSize, Color color) {
     vi::js::drawText(canvas,text, posX, posY, fontSize, &color);
 }
@@ -152,6 +207,7 @@ fn void drawCircle(int centerX, int centerY, float radius, Color color) { Canvas
 fn void drawRectangle(int posX, int posY, int width, int height, Color color) { Canvas.drawRectangle(currentCanvas, posX, posY, width, height, color); }
 fn void drawRectangleV(IntVector2 position, IntVector2 size, Color color) { Canvas.drawRectangleV(currentCanvas, position, size, color); }
 fn void drawRectangleLines(int posX, int posY, int width, int height, Color color) { Canvas.drawRectangleLines(currentCanvas, posX, posY, width, height, color); }
+fn void drawLine(int x1, int y1, int x2, int y2, Color color) { Canvas.drawLine(currentCanvas, x1, y1, x2, y2, color); }
 fn void drawText(char *text, int posX, int posY, int fontSize, Color color) { Canvas.drawText(currentCanvas, text, posX, posY, fontSize, color); }
 
 fn void setCanvas(Canvas *canvas) { currentCanvas = canvas; }

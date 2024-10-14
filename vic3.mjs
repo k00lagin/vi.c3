@@ -133,11 +133,11 @@ class Vic3 {
             this.dt = (timestamp - this.previous)/1000.0;
             this.previous = timestamp;
             if (this.ctx.canvas.classList.contains("visible")) {
-            this.wasm.instance.exports.draw(Math.min(this.dt, 1 / 60)); // TODO: introduce less hacky way to limit dt
-            // TODO: create separate update function
-            const buffer = this.wasm.instance.exports.memory.buffer;
-            const pixels = new Uint8ClampedArray(buffer, this.canvasPtr + 8, this.canvasWidth * this.canvasHeight * 4);
-            this.ctx.putImageData(new ImageData(pixels, this.canvasWidth, this.canvasHeight), 0, 0);
+                this.wasm.instance.exports.draw(Math.min(this.dt, 1 / 60)); // TODO: introduce less hacky way to limit dt
+                // TODO: create separate update function
+                const buffer = this.wasm.instance.exports.memory.buffer;
+                const pixels = new Uint8ClampedArray(buffer, this.canvasPtr + 8, this.canvasWidth * this.canvasHeight * 4);
+                this.ctx.putImageData(new ImageData(pixels, this.canvasWidth, this.canvasHeight), 0, 0);
                 renderDebugInfo(this.ctx, this.dt, this);
             }
             requestAnimationFrame(next);
