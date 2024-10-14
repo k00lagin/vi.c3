@@ -155,6 +155,7 @@ fn void drawRectangleLines(int posX, int posY, int width, int height, Color colo
 fn void drawText(char *text, int posX, int posY, int fontSize, Color color) { Canvas.drawText(currentCanvas, text, posX, posY, fontSize, color); }
 
 fn void setCanvas(Canvas *canvas) { currentCanvas = canvas; }
+extern fn void quit() @export("shouldQuit") @wasm;
 
 module vi::kb;
 

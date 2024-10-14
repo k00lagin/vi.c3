@@ -11,13 +11,45 @@ function makeEnvironment(env) {
     });
 }
 
+function renderDebugInfo(ctx, deltaTime, game) {
+    const fontSize = 28;
+    ctx.font = `${fontSize}px bold`;
+    game.dts.push(deltaTime);
+    if (game.dts.length > 60)
+        game.dts.shift();
+    const dtAvg = game.dts.reduce((a, b) => a + b, 0) / game.dts.length;
+    const labels = [];
+    labels.push(`FPS: ${Math.floor(1 / dtAvg)}`);
+    const shadowOffset = fontSize * 0.06;
+    const padding = 70;
+    for (let i = 0; i < labels.length; ++i) {
+        ctx.fillStyle = "black";
+        ctx.fillText(labels[i], padding, padding + fontSize * i);
+        ctx.fillStyle = "white";
+        ctx.fillText(labels[i], padding + shadowOffset, padding - shadowOffset + fontSize * i);
+    }
+}
+
+let handleIntersection = function (entries) {
+    for (let entry of entries) {
+        if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+        } else {
+            entry.target.classList.remove("visible");
+        }
+    }
+}
+
+const observer = new IntersectionObserver(handleIntersection);
+
 class Vic3 {
     #reset() {
         this.wasm = undefined;
         this.ctx = undefined;
         this.dt = undefined;
+        this.dts = [];
         this.previous = undefined;
-        this.quit = false;
+        this.quit = undefined;
         this.canvasPtr = undefined;
         this.canvasWidth = undefined;
         this.canvasHeight = undefined;
@@ -39,6 +71,7 @@ class Vic3 {
         if (typeof canvas === "string") { // canvas is either a selector or a canvas element
             canvas = document.querySelector(canvas);
         }
+        observer.observe(canvas);
         this.ctx = canvas.getContext("2d");
         if (this.ctx === null) {
             throw new Error("Could not create 2d canvas context");
@@ -89,24 +122,33 @@ class Vic3 {
         this.wasm.instance.exports.main();
 
         const next = (timestamp) => {
-            if (this.quit) {
+            if (this.quit === 1) {
                 this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+                this.#reset();
+                return;
+            } else if (this.quit === 0) {
                 this.#reset();
                 return;
             }
             this.dt = (timestamp - this.previous)/1000.0;
             this.previous = timestamp;
+            if (this.ctx.canvas.classList.contains("visible")) {
             this.wasm.instance.exports.draw(Math.min(this.dt, 1 / 60)); // TODO: introduce less hacky way to limit dt
             // TODO: create separate update function
             const buffer = this.wasm.instance.exports.memory.buffer;
             const pixels = new Uint8ClampedArray(buffer, this.canvasPtr + 8, this.canvasWidth * this.canvasHeight * 4);
             this.ctx.putImageData(new ImageData(pixels, this.canvasWidth, this.canvasHeight), 0, 0);
+                renderDebugInfo(this.ctx, this.dt, this);
+            }
             requestAnimationFrame(next);
         }
         window.requestAnimationFrame((timestamp) => {
             this.previous = timestamp;
             window.requestAnimationFrame(next);
         });
+    }
+    shouldQuit() {
+        this.quit = 0;
     }
     fmodf(a, b) {
         return a % b;
