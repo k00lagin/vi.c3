@@ -125,6 +125,54 @@ class Vic3 {
     isKeyDown(keyCode) {
         return this.currentPressedKeyState.has(keyCode);
     }
+    drawText(canvasPtr, textPtr, posX, posY, fontSize, colorPtr) { // TODO: implement font atlas, and C3's drawText
+        const buffer = this.wasm.instance.exports.memory.buffer;
+        const pixelsPtr = canvasPtr + 8;
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = this.canvasWidth;
+        tempCanvas.height = this.canvasHeight;
+        const tempCtx = tempCanvas.getContext("2d");
+        tempCtx.putImageData(new ImageData(new Uint8ClampedArray(buffer, pixelsPtr, this.canvasWidth * this.canvasHeight * 4), this.canvasWidth, this.canvasHeight), 0, 0);
+        const text = cstr_by_ptr(buffer, textPtr);
+        const color = getColorFromMemory(buffer, colorPtr);
+
+        tempCtx.fillStyle = color;
+        tempCtx.font = `${fontSize}px VT323`;
+        tempCtx.fillText(text, posX, posY);
+
+        const pixels = new Uint8ClampedArray(tempCtx.getImageData(0, 0, this.canvasWidth, this.canvasHeight).data);
+        const target = new Uint8ClampedArray(buffer, pixelsPtr, this.canvasWidth * this.canvasHeight * 4);
+        target.set(pixels);
+    }
+}
+
+function cstrlen(mem, ptr) {
+    let len = 0;
+    while (mem[ptr] != 0) {
+        len++;
+        ptr++;
+    }
+    return len;
+}
+
+function cstr_by_ptr(mem_buffer, ptr) {
+    const mem = new Uint8Array(mem_buffer);
+    const len = cstrlen(mem, ptr);
+    const bytes = new Uint8Array(mem_buffer, ptr, len);
+    return new TextDecoder().decode(bytes);
+}
+
+function colorHexUnpacked(r, g, b, a) {
+    r = r.toString(16).padStart(2, '0');
+    g = g.toString(16).padStart(2, '0');
+    b = b.toString(16).padStart(2, '0');
+    a = a.toString(16).padStart(2, '0');
+    return "#"+r+g+b+a;
+}
+
+function getColorFromMemory(buffer, color_ptr) {
+    const [r, g, b, a] = new Uint8Array(buffer, color_ptr, 4);
+    return colorHexUnpacked(r, g, b, a);
 }
 
 export default Vic3;

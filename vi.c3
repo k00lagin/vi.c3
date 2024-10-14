@@ -141,6 +141,10 @@ fn void Canvas.drawRectangleLines(&canvas, int posX, int posY, int width, int he
     }
 }
 
+fn void Canvas.drawText(&canvas, char *text, int posX, int posY, int fontSize, Color color) {
+    vi::js::drawText(canvas,text, posX, posY, fontSize, &color);
+}
+
 fn void clearBackground(Color color) { Canvas.clearBackground(currentCanvas, color); }
 fn void drawPixel(int x, int y, Color color) { Canvas.drawPixel(currentCanvas, x, y, color); }
 fn void drawPixelV(IntVector2 position, Color color) { Canvas.drawPixelV(currentCanvas, position, color); }
@@ -148,6 +152,7 @@ fn void drawCircle(int centerX, int centerY, float radius, Color color) { Canvas
 fn void drawRectangle(int posX, int posY, int width, int height, Color color) { Canvas.drawRectangle(currentCanvas, posX, posY, width, height, color); }
 fn void drawRectangleV(IntVector2 position, IntVector2 size, Color color) { Canvas.drawRectangleV(currentCanvas, position, size, color); }
 fn void drawRectangleLines(int posX, int posY, int width, int height, Color color) { Canvas.drawRectangleLines(currentCanvas, posX, posY, width, height, color); }
+fn void drawText(char *text, int posX, int posY, int fontSize, Color color) { Canvas.drawText(currentCanvas, text, posX, posY, fontSize, color); }
 
 fn void setCanvas(Canvas *canvas) { currentCanvas = canvas; }
 
@@ -163,3 +168,7 @@ extern fn bool isKeyDown(char key) @export("isKeyDown") @wasm;
 module vi::js;
 
 extern fn float getRandomValue(int min, int max) @export("getRandomValue") @wasm;
+
+// Here'll be temporary *Borrow-functions*. They borrow given canvas to js, draw stuff, and rewrite pixels in raw memory.
+
+extern fn void drawText(Canvas *canvas, char *text, int posX, int posY, int fontSize, Color *color) @export("drawText") @wasm;
