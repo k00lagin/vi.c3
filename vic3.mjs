@@ -138,7 +138,7 @@ class Vic3 {
                 const buffer = this.wasm.instance.exports.memory.buffer;
                 const pixels = new Uint8ClampedArray(buffer, this.canvasPtr + 8, this.canvasWidth * this.canvasHeight * 4);
                 this.ctx.putImageData(new ImageData(pixels, this.canvasWidth, this.canvasHeight), 0, 0);
-                renderDebugInfo(this.ctx, this.dt, this);
+                this.quit === undefined && renderDebugInfo(this.ctx, this.dt, this);
             }
             requestAnimationFrame(next);
         }
