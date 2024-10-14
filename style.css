@@ -20,7 +20,7 @@ body {
 aside {
     width: 18rem;
     flex-shrink: 0;
-    border-right: 0.5px solid rgb(var(--white) / 10%);
+    border-right: 0.5px solid rgb(var(--white) / 50%);
 }
 
 aside nav ul {
@@ -36,7 +36,7 @@ main {
     gap: 1rem;
     align-items: center;
     flex-grow: 1;
-    padding: 0 3rem 1rem;
+    padding: 0 3rem 3rem;
     overscroll-behavior: none;
     overflow: auto;
 }
@@ -57,17 +57,19 @@ a:active {
 }
 
 canvas {
-    border: 0.5px solid rgb(var(--white) / 10%);
+    border: 0.5px solid rgb(var(--white) / 50%);
 }
 
 canvas:focus {
+    border: 0.5px solid rgb(var(--red) / 50%);
     outline: 1px solid rgb(var(--red) / 50%);
 }
 
 blockquote.warning {
-    margin: 0 1rem;
-    width: calc(100% - 2rem);
+    margin: 0;
+    width: 100%;
     background-color: rgb(var(--red) / 10%);
     border-left: 4px solid rgb(var(--red) / 100%);
-    padding: 1rem;
+    padding: 0 1rem;
+    box-sizing: border-box;
 }
