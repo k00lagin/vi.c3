@@ -109,7 +109,8 @@ class Vic3 {
         }
         const mouseMove = (e) => {
             if (this.focused) {
-                this.currentMousePosition = {x: e.clientX, y: e.clientY};
+                const boundingClientRect = this.ctx.canvas.getBoundingClientRect()
+                this.currentMousePosition = {x: e.clientX - boundingClientRect.x, y: e.clientY - boundingClientRect.y};
             }
         }
 
@@ -185,6 +186,15 @@ class Vic3 {
         const pixels = new Uint8ClampedArray(tempCtx.getImageData(0, 0, this.canvasWidth, this.canvasHeight).data);
         const target = new Uint8ClampedArray(buffer, pixelsPtr, this.canvasWidth * this.canvasHeight * 4);
         target.set(pixels);
+    }
+    getMousePosition(resultPtr) {
+        const buffer = this.wasm.instance.exports.memory.buffer;
+        const target = new Uint32Array(buffer, resultPtr, 2);
+        target.set(new Uint32Array([this.currentMousePosition.x, this.currentMousePosition.y], 2));
+    }
+    setCursor(cursorPtr) {
+        const buffer = this.wasm.instance.exports.memory.buffer;
+        this.ctx.canvas.style.cursor = cstr_by_ptr(buffer, cursorPtr)
     }
 }
 

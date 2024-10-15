@@ -7,6 +7,11 @@ const demos = [
         out: "./build/ball"
     },
     {
+        name: "cursors",
+        sources: ["./demos/cursors.c3", "./vi.c3"],
+        out: "./build/cursors"
+    },
+    {
         name: "input-keys",
         sources: ["./demos/input-keys.c3", "./vi.c3"],
         out: "./build/input-keys"

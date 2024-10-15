@@ -5,6 +5,8 @@ import std::math;
 def Color = char[<4>];
 def Vector2 = float[<2>];
 def IntVector2 = int[<2>];
+def Vector4 = float[<4>];
+def IntVector4 = int[<4>];
 
 /*
     // C3 implementation of swap macro
@@ -225,6 +227,13 @@ fn void drawText(char *text, int posX, int posY, int fontSize, Color color) { Ca
 fn void setCanvas(Canvas *canvas) { currentCanvas = canvas; }
 fn void draw(Canvas *source, int sourceX, int sourceY, int width, int height, int targetX, int targetY) { Canvas.draw(source, currentCanvas, sourceX, sourceY, width, height, targetX, targetY); }
 
+fn bool checkCollisionPointRec(IntVector2 point, IntVector4 rect) {
+    if (point.x >= rect.x && point.x <= rect.x + rect.b && point.y >= rect.y && point.y <= rect.y + rect.a) {
+        return true;
+    }
+    return false;
+}
+
 extern fn void quit() @export("shouldQuit") @wasm;
 
 module vi::kb;
@@ -235,6 +244,11 @@ const ARROW_UP = 38;
 const ARROW_DOWN = 40;
 
 extern fn bool isKeyDown(char key) @export("isKeyDown") @wasm;
+
+module vi::mouse;
+
+extern fn void getPosition(IntVector2 *resultPtr) @export("getMousePosition") @wasm;
+extern fn void setCursor(char *cursor) @export("setCursor") @wasm;
 
 module vi::js;
 
