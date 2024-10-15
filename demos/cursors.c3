@@ -52,6 +52,9 @@ bool hoverCursor;
 
 IntVector2 mouseCoords;
 
+Canvas *labels;
+bool labelsDrawn = false;
+
 fn void draw(float dt) @export("draw") @wasm {
     vi::clearBackground(Color { 8, 8, 18, 255 });
 
@@ -70,7 +73,10 @@ fn void draw(float dt) @export("draw") @wasm {
                 hoverCursor = true;
             }
             vi::drawRectangle(rect.x, rect.y, RECT_SIZE, RECT_SIZE, Color { 200, 69, 69, 255 });
-            // vi::drawText(Cursors.values[row * COLS + col].description, rect.x, (int)(rect.y + (RECT_SIZE / 9 * 5.75)), 15, Color { 255, 255, 255, 255 });
+            if (!labelsDrawn) {
+                labels.drawText(Cursors.values[row * COLS + col].description, rect.x + 1, (int)(rect.y + (RECT_SIZE / 9 * 5.75 + 1)), 17, Color { 18, 18, 18, 255 });
+                labels.drawText(Cursors.values[row * COLS + col].description, rect.x + 2, (int)(rect.y + (RECT_SIZE / 9 * 5.75)), 17, Color { 255, 255, 255, 255 });
+            }
         }
     }
 
@@ -78,8 +84,14 @@ fn void draw(float dt) @export("draw") @wasm {
         currentCursor = 0;
         vi::mouse::setCursor(Cursors.DEFAULT.description);
     }
+    if (!labelsDrawn) {
+        labelsDrawn = true;
+    } else {
+        vi::draw(labels, 0, 0, WIDTH, HEIGHT, 0, 0);
+    }
 }
 
 fn void main() @export("main") @wasm {
     vi::initWindow(WIDTH, HEIGHT);
+    labels = vi::newCanvas(WIDTH, HEIGHT);
 }
