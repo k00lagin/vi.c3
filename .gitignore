@@ -1,3 +1,6 @@
 node_modules/*
 references/*
 *.wat
+*.exe
+*.lib
+*.pdb
