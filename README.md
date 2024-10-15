@@ -1,5 +1,7 @@
 # Vic3
 
+![showcase](https://github.com/k00lagin/vi.c3/blob/main/assets/showcase.png?raw=true)
+
 Vic3 is a work-in-progress library for building apps and games with WebAssembly and C3.
 
 It's taking inspiration from (alphabetically): [Love 2d](https://love2d.org/), [olive.c](https://github.com/tsoding/olive.c), [Raylib](https://www.raylib.com/), and [zozlib.js](https://github.com/tsoding/zozlib.js).
