@@ -6,15 +6,16 @@ def Color = char[<4>];
 def Vector2 = float[<2>];
 def IntVector2 = int[<2>];
 
-// C3 implementation of swap macro
-// looks fine, but not working for some reason in my particular case
-// macro void @swap(&x, &y)
-// {
-// 	var t = *x;
-
-// 	*x = *y;
-// 	*y = t;
-// }
+/*
+    // C3 implementation of swap macro
+    // looks fine, but not working for some reason in my particular case
+    // macro void @swap(&x, &y)
+    // {
+    // 	var t = *x;
+    // 	*x = *y;
+    // 	*y = t;
+    // }
+*/
 
 fn void swap(int* x, int* y) {
     int t = *x;
@@ -200,6 +201,17 @@ fn void Canvas.drawText(&canvas, char *text, int posX, int posY, int fontSize, C
     vi::js::drawText(canvas,text, posX, posY, fontSize, &color);
 }
 
+fn void Canvas.draw(&canvas, Canvas *target, int sourceX, int sourceY, int width, int height, int targetX, int targetY) {
+    for (int x = 0; x < math::min(width, canvas.width - sourceX); ++x) {
+        for (int y = 0; y < math::min(height, canvas.height - sourceY); ++y) {
+            Color pixel = canvas.pixels[(sourceY + y) * canvas.width + (sourceX + x)];
+            if (pixel.a > 0) {
+                target.drawPixel(targetX + x, targetY + y, pixel);
+            }
+        }
+    }
+}
+
 fn void clearBackground(Color color) { Canvas.clearBackground(currentCanvas, color); }
 fn void drawPixel(int x, int y, Color color) { Canvas.drawPixel(currentCanvas, x, y, color); }
 fn void drawPixelV(IntVector2 position, Color color) { Canvas.drawPixelV(currentCanvas, position, color); }
@@ -211,6 +223,8 @@ fn void drawLine(int x1, int y1, int x2, int y2, Color color) { Canvas.drawLine(
 fn void drawText(char *text, int posX, int posY, int fontSize, Color color) { Canvas.drawText(currentCanvas, text, posX, posY, fontSize, color); }
 
 fn void setCanvas(Canvas *canvas) { currentCanvas = canvas; }
+fn void draw(Canvas *source, int sourceX, int sourceY, int width, int height, int targetX, int targetY) { Canvas.draw(source, currentCanvas, sourceX, sourceY, width, height, targetX, targetY); }
+
 extern fn void quit() @export("shouldQuit") @wasm;
 
 module vi::kb;
