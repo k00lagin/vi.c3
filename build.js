@@ -12,9 +12,9 @@ const demos = [
         out: "./build/input-keys"
     },
     {
-        name: "lines",
-        sources: ["./demos/lines.c3", "./vi.c3"],
-        out: "./build/lines"
+        name: "fake-gradient",
+        sources: ["./demos/fake-gradient.c3", "./vi.c3"],
+        out: "./build/fake-gradient"
     },
     {
         name: "retro",
