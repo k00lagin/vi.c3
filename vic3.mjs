@@ -108,10 +108,8 @@ class Vic3 {
             }
         }
         const mouseMove = (e) => {
-            if (this.focused) {
-                const boundingClientRect = this.ctx.canvas.getBoundingClientRect()
-                this.currentMousePosition = {x: e.clientX - boundingClientRect.x, y: e.clientY - boundingClientRect.y};
-            }
+            const boundingClientRect = this.ctx.canvas.getBoundingClientRect()
+            this.currentMousePosition = {x: e.clientX - boundingClientRect.x, y: e.clientY - boundingClientRect.y};
         }
 
         window.addEventListener("keydown", keyDown);
