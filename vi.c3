@@ -1,6 +1,7 @@
 module vi;
 
 import std::math;
+import std::core::string;
 
 def Color = char[<4>];
 def Vector2 = float[<2>];
@@ -234,6 +235,8 @@ fn bool checkCollisionPointRec(IntVector2 point, IntVector4 rect) {
     return false;
 }
 
+extern fn void setClipboardText(char *text) @export("setClipboardText") @wasm;
+
 extern fn void quit() @export("shouldQuit") @wasm;
 
 module vi::kb;
@@ -247,8 +250,11 @@ extern fn bool isKeyDown(char key) @export("isKeyDown") @wasm;
 
 module vi::mouse;
 
-extern fn void getPosition(IntVector2 *resultPtr) @export("getMousePosition") @wasm;
-extern fn void setCursor(char *cursor) @export("setCursor") @wasm;
+extern fn void getPosition(IntVector2 *resultPtr) @export("Mouse_getPosition") @wasm;
+extern fn int getX() @export("Mouse_getX") @wasm;
+extern fn int getY() @export("Mouse_getY") @wasm;
+extern fn bool isDown(char button) @export("Mouse_isDown") @wasm; // 0-4 https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/button
+extern fn void setCursor(char *cursor) @export("Mouse_setCursor") @wasm;
 
 module vi::js;
 

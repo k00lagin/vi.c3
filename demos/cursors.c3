@@ -51,6 +51,8 @@ usz currentCursor = 0;
 bool hoverCursor;
 
 IntVector2 mouseCoords;
+bool mouseDownPrevState = false;
+bool mouseDownState = false;
 
 Canvas *labels;
 bool labelsDrawn = false;
@@ -59,6 +61,10 @@ fn void draw(float dt) @export("draw") @wasm {
     vi::clearBackground(Color { 8, 8, 18, 255 });
 
     vi::mouse::getPosition(&mouseCoords);
+    mouseDownState = vi::mouse::isDown(0);
+    if (!mouseDownState && mouseDownPrevState) {
+        mouseDownPrevState = false;
+    }
     hoverCursor = false;
 
     for (int col = 0; col < COLS; ++col) {
@@ -70,9 +76,19 @@ fn void draw(float dt) @export("draw") @wasm {
                     vi::mouse::setCursor(Cursors.values[row * COLS + col].description);
                     currentCursor = (usz)Cursors.values[row * COLS + col];
                 }
+                if (!mouseDownPrevState && mouseDownState) {
+                    mouseDownPrevState = true;
+                    vi::setClipboardText(String.concat("cursor: ", Cursors.values[row * COLS + col].description));
+                }
+                if (mouseDownState) {
+                    vi::drawRectangle(rect.x, rect.y, RECT_SIZE, RECT_SIZE, Color { 255, 69, 200, 255 });
+                } else {
+                    vi::drawRectangle(rect.x, rect.y, RECT_SIZE, RECT_SIZE, Color { 200, 69, 69, 255 });
+                }
                 hoverCursor = true;
+            } else {
+                vi::drawRectangle(rect.x, rect.y, RECT_SIZE, RECT_SIZE, Color { 200, 69, 69, 255 });
             }
-            vi::drawRectangle(rect.x, rect.y, RECT_SIZE, RECT_SIZE, Color { 200, 69, 69, 255 });
             if (!labelsDrawn) {
                 labels.drawText(Cursors.values[row * COLS + col].description, rect.x + 1, (int)(rect.y + (RECT_SIZE / 9 * 5.75 + 1)), 17, Color { 18, 18, 18, 255 });
                 labels.drawText(Cursors.values[row * COLS + col].description, rect.x + 2, (int)(rect.y + (RECT_SIZE / 9 * 5.75)), 17, Color { 255, 255, 255, 255 });

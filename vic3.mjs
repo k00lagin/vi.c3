@@ -58,6 +58,8 @@ class Vic3 {
         this.currentPressedKeyState = new Set();
         this.currentMouseWheelMoveState = 0;
         this.currentMousePosition = {x: 0, y: 0};
+        this.prevMouseButtonState = new Set();
+        this.currentMouseButtonState = new Set();
     }
 
     constructor() {
@@ -112,10 +114,19 @@ class Vic3 {
             this.currentMousePosition = {x: e.clientX - boundingClientRect.x, y: e.clientY - boundingClientRect.y};
         }
 
+        const mouseDown = (e) => {
+            this.currentMouseButtonState.add(e.button);
+        }
+        const mouseUp = (e) => {
+            this.currentMouseButtonState.delete(e.button);
+        }
+
         window.addEventListener("keydown", keyDown);
         window.addEventListener("keyup", keyUp);
         window.addEventListener("wheel", wheelMove);
         window.addEventListener("mousemove", mouseMove);
+        this.ctx.canvas.addEventListener("mousedown", mouseDown);
+        window.addEventListener("mouseup", mouseUp);
 
         this.wasm.instance.exports._initialize();
         this.wasm.instance.exports.main();
@@ -185,12 +196,26 @@ class Vic3 {
         const target = new Uint8ClampedArray(buffer, pixelsPtr, this.canvasWidth * this.canvasHeight * 4);
         target.set(pixels);
     }
-    getMousePosition(resultPtr) {
+    async setClipboardText(textPtr) {
+        const buffer = this.wasm.instance.exports.memory.buffer;
+        const text = cstr_by_ptr(buffer, textPtr);
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (error) {
+            console.warn(error.message);
+        }
+    }
+    Mouse_getPosition(resultPtr) {
         const buffer = this.wasm.instance.exports.memory.buffer;
         const target = new Uint32Array(buffer, resultPtr, 2);
         target.set(new Uint32Array([this.currentMousePosition.x, this.currentMousePosition.y], 2));
     }
-    setCursor(cursorPtr) {
+    Mouse_getX() { return this.currentMousePosition.x; }
+    Mouse_getY() { return this.currentMousePosition.y; }
+    Mouse_isDown(buttonCode) {
+        return this.currentMouseButtonState.has(buttonCode);
+    }
+    Mouse_setCursor(cursorPtr) {
         const buffer = this.wasm.instance.exports.memory.buffer;
         this.ctx.canvas.style.cursor = cstr_by_ptr(buffer, cursorPtr)
     }
