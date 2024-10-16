@@ -255,5 +255,8 @@ module vi::js;
 extern fn float getRandomValue(int min, int max) @export("getRandomValue") @wasm;
 
 // Here'll be temporary *Borrow-functions*. They borrow given canvas to js, draw stuff, and rewrite pixels in raw memory.
-
+// **BEWARE** The memory passing back and forth in a single frame will heavily influence performance
+// You can avoid it by drawing everything once at the start of the programm to a separate canvas
+// and then just draw this canvas to your actual render target
+// TODO: maybe I should use freetype?
 extern fn void drawText(Canvas *canvas, char *text, int posX, int posY, int fontSize, Color *color) @export("drawText") @wasm;
