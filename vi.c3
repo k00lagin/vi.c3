@@ -26,6 +26,11 @@ fn void swap(int* x, int* y) {
     *y = t;
 }
 
+enum BlendMode : uint {
+    ALPHA,
+    REPLACE
+}
+BlendMode currentBlendMode = BlendMode.ALPHA;
 
 struct Canvas {
     usz width;
@@ -96,7 +101,17 @@ fn void Canvas.drawPixel(&canvas, int posX, int posY, Color color) {
     if (posX < 0 || posX >= canvas.width || posY < 0 || posY >= canvas.height) {
         return;
     }
-    canvas.pixels[posY * canvas.width + posX] = color;
+    if (currentBlendMode == BlendMode.ALPHA && color.a < 255) {
+        Color pixel = canvas.pixels[posY * canvas.width + posX];
+        canvas.pixels[posY * canvas.width + posX] = Color {
+            (char)((color.r * color.a + pixel.r * (255 - color.a)) / 255),
+            (char)((color.g * color.a + pixel.g * (255 - color.a)) / 255),
+            (char)((color.b * color.a + pixel.b * (255 - color.a)) / 255),
+            (char)((color.a * 255 + pixel.a * (255 - color.a)) / 255)
+        };
+    } else {
+        canvas.pixels[posY * canvas.width + posX] = color;
+    }
 }
 
 // Draw a pixel (Vector version)
@@ -226,6 +241,7 @@ fn void drawLine(int x1, int y1, int x2, int y2, Color color) { Canvas.drawLine(
 fn void drawText(char *text, int posX, int posY, int fontSize, Color color) { Canvas.drawText(currentCanvas, text, posX, posY, fontSize, color); }
 
 fn void setCanvas(Canvas *canvas) { currentCanvas = canvas; }
+fn void setBlendMode(BlendMode blendMode) { currentBlendMode = blendMode; }
 fn void draw(Canvas *source, int sourceX, int sourceY, int width, int height, int targetX, int targetY) { Canvas.draw(source, currentCanvas, sourceX, sourceY, width, height, targetX, targetY); }
 
 fn bool checkCollisionPointRec(IntVector2 point, IntVector4 rect) {
