@@ -110,6 +110,7 @@ class Vic3 {
             }
         }
         const mouseMove = (e) => {
+            if (this.ctx === undefined) return;
             const boundingClientRect = this.ctx.canvas.getBoundingClientRect()
             this.currentMousePosition = {x: e.clientX - boundingClientRect.x, y: e.clientY - boundingClientRect.y};
         }
@@ -137,6 +138,7 @@ class Vic3 {
                 this.#reset();
                 return;
             } else if (this.quit === 0) {
+                this.ctx.canvas.removeEventListener("mousedown", mouseDown);
                 this.#reset();
                 return;
             }

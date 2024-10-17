@@ -39,6 +39,7 @@ struct Canvas {
 }
 Canvas *defaultCanvas;
 Canvas *currentCanvas;
+IntVector4 drawArea = IntVector4 { 0, 0, 0, 0 }; // sets by setScissor, restrict draw area, if zeros - whole canvas
 
 extern fn void connectCanvas(Canvas *canvas) @export("connectCanvas") @wasm;
 fn Canvas *initWindow(usz width, usz height) {
@@ -100,6 +101,11 @@ fn void Canvas.clearBackground(&canvas, Color color) {
 fn void Canvas.drawPixel(&canvas, int posX, int posY, Color color) {
     if (posX < 0 || posX >= canvas.width || posY < 0 || posY >= canvas.height) {
         return;
+    }
+    if (drawArea[2] > 0 && drawArea[3] > 0) {
+        if (posX < drawArea.x || posX >= drawArea.x + drawArea[2] || posY < drawArea.y || posY >= drawArea.y + drawArea[3]) {
+            return;
+        }
     }
     if (currentBlendMode == BlendMode.ALPHA && color.a < 255) {
         Color pixel = canvas.pixels[posY * canvas.width + posX];
@@ -230,6 +236,17 @@ fn void Canvas.draw(&canvas, Canvas *target, int sourceX, int sourceY, int width
     }
 }
 
+fn void Canvas.mask(&mask, Canvas *target, int maskX, int maskY, int width, int height, int targetX, int targetY) {
+    for (int x = 0; x < math::min(width, mask.width - maskX); ++x) {
+        for (int y = 0; y < math::min(height, mask.height - maskY); ++y) {
+            Color mask_pixel = mask.pixels[(maskY + y) * mask.width + (maskX + x)];
+            if (mask_pixel.a == 0) {
+                target.pixels[(targetY + y) * target.width + (targetX + x)] = Color { 0, 0, 0, 0 };
+            }
+        }
+    }
+}
+
 fn void clearBackground(Color color) { Canvas.clearBackground(currentCanvas, color); }
 fn void drawPixel(int x, int y, Color color) { Canvas.drawPixel(currentCanvas, x, y, color); }
 fn void drawPixelV(IntVector2 position, Color color) { Canvas.drawPixelV(currentCanvas, position, color); }
@@ -241,8 +258,16 @@ fn void drawLine(int x1, int y1, int x2, int y2, Color color) { Canvas.drawLine(
 fn void drawText(char *text, int posX, int posY, int fontSize, Color color) { Canvas.drawText(currentCanvas, text, posX, posY, fontSize, color); }
 
 fn void setCanvas(Canvas *canvas) { currentCanvas = canvas; }
+fn void setScissor(IntVector4 area) { drawArea = area; } // The idea stolen from Love2d https://love2d.org/wiki/love.graphics.setScissor
+fn void unsetScissor() { drawArea = IntVector4 { 0, 0, 0, 0 }; }
 fn void setBlendMode(BlendMode blendMode) { currentBlendMode = blendMode; }
-fn void draw(Canvas *source, int sourceX, int sourceY, int width, int height, int targetX, int targetY) { Canvas.draw(source, currentCanvas, sourceX, sourceY, width, height, targetX, targetY); }
+
+fn void draw(Canvas *source, int sourceX, int sourceY, int width, int height, int targetX, int targetY) {
+    Canvas.draw(source, currentCanvas, sourceX, sourceY, width, height, targetX, targetY);
+}
+fn void mask(Canvas *mask, int maskX, int maskY, int width, int height, int targetX, int targetY) {
+    Canvas.mask(mask, currentCanvas, maskX, maskY, width, height, targetX, targetY);
+}
 
 fn bool checkCollisionPointRec(IntVector2 point, IntVector4 rect) {
     if (point.x >= rect.x && point.x <= rect.x + rect.b && point.y >= rect.y && point.y <= rect.y + rect.a) {

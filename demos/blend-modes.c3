@@ -19,17 +19,21 @@ fn void draw(float dt) @export("draw") @wasm {
 			}
 		}
 		vi::drawLine(WIDTH / 2, 0, WIDTH / 2, HEIGHT, Color { 0, 0, 0, 255});
+		vi::drawLine(WIDTH / 2 - 1, 0, WIDTH / 2, HEIGHT, Color { 230, 230, 230, 255});
+		vi::drawLine(WIDTH / 2 + 1, 0, WIDTH / 2, HEIGHT, Color { 230, 230, 230, 255});
 		vi::mouse::getPosition(&mouseCoords);
 
-		if (mouseCoords.x < WIDTH / 2 && vi::currentBlendMode == BlendMode.REPLACE) {
-			vi::setBlendMode(BlendMode.ALPHA);
-		} else if (mouseCoords.x > WIDTH / 2 && vi::currentBlendMode == BlendMode.ALPHA) {
-			vi::setBlendMode(BlendMode.REPLACE);
-		}
-
+		vi::setScissor(IntVector4 { WIDTH / 2, 0, WIDTH, HEIGHT});
+		vi::setBlendMode(BlendMode.REPLACE);
 		vi::drawCircle(mouseCoords.x, mouseCoords.y, 40, Color { 169, 169, 255, 200});
-
 		vi::draw(labels, 0, 0, WIDTH, HEIGHT, 0, 0);
+
+		vi::setScissor(IntVector4 { 0, 0, WIDTH / 2, HEIGHT});
+		vi::setBlendMode(BlendMode.ALPHA);
+		vi::drawCircle(mouseCoords.x, mouseCoords.y, 40, Color { 169, 169, 255, 200});
+		vi::draw(labels, 0, 0, WIDTH, HEIGHT, 0, 0);
+
+		vi::setScissor(IntVector4 { 0, 0, 0, 0});
 }
 
 fn void main() @export("main") @wasm {
