@@ -205,6 +205,11 @@ class Vic3 {
             console.warn(error.message);
         }
     }
+    openURL(urlPtr) {
+        const buffer = this.wasm.instance.exports.memory.buffer;
+        const url = cstr_by_ptr(buffer, urlPtr);
+        window.open(url);
+    }
     Mouse_getPosition(resultPtr) {
         const buffer = this.wasm.instance.exports.memory.buffer;
         const target = new Uint32Array(buffer, resultPtr, 2);

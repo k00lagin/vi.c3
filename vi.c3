@@ -252,6 +252,7 @@ fn bool checkCollisionPointRec(IntVector2 point, IntVector4 rect) {
 }
 
 extern fn void setClipboardText(char *text) @export("setClipboardText") @wasm;
+extern fn void openURL(char *text) @export("openURL") @wasm;
 
 extern fn void quit() @export("shouldQuit") @wasm;
 
