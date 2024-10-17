@@ -54,10 +54,12 @@ fn void main() @export("main") @wasm {
 
     sun = vi::newCanvas(401, 401);
     sun.drawCircle(200, 220, 180, Color { 200, 69, 69, 255 });
+    vi::setBlendMode(BlendMode.REPLACE);
     sun.drawRectangle(0, 210, 401, 8, Color { 0, 0, 0, 0 });
     sun.drawRectangle(0, 225, 401, 8, Color { 0, 0, 0, 0 });
     sun.drawRectangle(0, 240, 401, 10, Color { 0, 0, 0, 0 });
     sun.drawRectangle(0, 260, 401, 5, Color { 0, 0, 0, 0 });
     sun.drawRectangle(0, 270, 401, 6, Color { 0, 0, 0, 0 });
     sun.drawRectangle(0, 285, 401, 8, Color { 0, 0, 0, 0 });
+    vi::setBlendMode(BlendMode.ALPHA);
 }
