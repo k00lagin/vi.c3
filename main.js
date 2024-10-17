@@ -6,7 +6,6 @@ const demos = [
 	{ name: 'cursors', wasm: 'build/cursors.wasm', canvas: document.querySelector('.cursors-demo') },
 	{ name: 'input-keys', wasm: 'build/input-keys.wasm', canvas: document.querySelector('.input-keys-demo') },
 	{ name: 'blend-modes', wasm: 'build/blend-modes.wasm', canvas: document.querySelector('.blend-modes-demo') },
-	{ name: 'fake-gradient', wasm: 'build/fake-gradient.wasm', canvas: document.querySelector('.fake-gradient-demo') },
 	{ name: 'retro', wasm: 'build/retro.wasm', canvas: document.querySelector('.retro-demo') }
 ];
 

@@ -27,11 +27,6 @@ const demos = [
         out: "./build/blend-modes"
     },
     {
-        name: "fake-gradient",
-        sources: ["./demos/fake-gradient.c3", "./vi.c3"],
-        out: "./build/fake-gradient"
-    },
-    {
         name: "retro",
         sources: ["./demos/retro.c3", "./vi.c3"],
         out: "./build/retro"
