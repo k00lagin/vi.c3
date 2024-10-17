@@ -19,6 +19,11 @@ def IntVector4 = int[<4>];
     // 	*y = t;
     // }
 */
+macro sign(int x) {
+    if (x > 0) { return 1; }
+    else if (x < 0) { return -1; }
+    else { return 0; }
+}
 
 fn void swap(int* x, int* y) {
     int t = *x;
@@ -185,6 +190,26 @@ fn void Canvas.drawRectangleLines(&canvas, int posX, int posY, int width, int he
     }
 }
 
+fn void Canvas.drawTriangle(&canvas, int x1, int y1, int x2, int y2, int x3, int y3, Color color) {
+    int lx, hx, ly, hy;
+    if (vi::normalizeTriangle(canvas.width, canvas.height, x1, y1, x2, y2, x3, y3, &lx, &hx, &ly, &hy)) {
+        for (int y = ly; y <= hy; ++y) {
+            for (int x = lx; x <= hx; ++x) {
+                int u1, u2, det;
+                if (vi::barycentric(x1, y1, x2, y2, x3, y3, x, y, &u1, &u2, &det)) {
+                    canvas.drawPixel(x, y, color);
+                }
+            }
+        }
+    }
+}
+
+fn void Canvas.drawTriangleLines(&canvas, int x1, int y1, int x2, int y2, int x3, int y3, Color color) {
+    canvas.drawLine(x1, y1, x2, y2, color);
+    canvas.drawLine(x1, y1, x3, y3, color);
+    canvas.drawLine(x2, y2, x3, y3, color);
+}
+
 // Draw a line
 fn void Canvas.drawLine(&canvas, int x1, int y1, int x2, int y2, Color color) @export("drawLine") @wasm {
     int dx = x2 - x1;
@@ -254,6 +279,8 @@ fn void drawCircle(int centerX, int centerY, float radius, Color color) { Canvas
 fn void drawRectangle(int posX, int posY, int width, int height, Color color) { Canvas.drawRectangle(currentCanvas, posX, posY, width, height, color); }
 fn void drawRectangleV(IntVector2 position, IntVector2 size, Color color) { Canvas.drawRectangleV(currentCanvas, position, size, color); }
 fn void drawRectangleLines(int posX, int posY, int width, int height, Color color) { Canvas.drawRectangleLines(currentCanvas, posX, posY, width, height, color); }
+fn void drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, Color color) { Canvas.drawTriangle(currentCanvas, x1, y1, x2, y2, x3, y3, color); }
+fn void drawTriangleLines(int x1, int y1, int x2, int y2, int x3, int y3, Color color) { Canvas.drawTriangleLines(currentCanvas, x1, y1, x2, y2, x3, y3, color); }
 fn void drawLine(int x1, int y1, int x2, int y2, Color color) { Canvas.drawLine(currentCanvas, x1, y1, x2, y2, color); }
 fn void drawText(char *text, int posX, int posY, int fontSize, Color color) { Canvas.drawText(currentCanvas, text, posX, posY, fontSize, color); }
 
@@ -274,6 +301,42 @@ fn bool checkCollisionPointRec(IntVector2 point, IntVector4 rect) {
         return true;
     }
     return false;
+}
+
+fn bool normalizeTriangle(usz width, usz height, int x1, int y1, int x2, int y2, int x3, int y3, int *lx, int *hx, int *ly, int *hy) {
+    *lx = x1;
+    *hx = x1;
+    if (*lx > x2) { *lx = x2; }
+    if (*lx > x3) { *lx = x3; }
+    if (*hx < x2) { *hx = x2; }
+    if (*hx < x3) { *hx = x3; }
+    if (*lx < 0) { *lx = 0; }
+    if ((usz) *lx >= width) { return false; }
+    if (*hx < 0) { return false; }
+    if ((usz) *hx >= width) { *hx = width-1; }
+
+    *ly = y1;
+    *hy = y1;
+    if (*ly > y2) { *ly = y2; }
+    if (*ly > y3) { *ly = y3; }
+    if (*hy < y2) { *hy = y2; }
+    if (*hy < y3) { *hy = y3; }
+    if (*ly < 0) { *ly = 0; }
+    if ((usz) *ly >= height) { return false; }
+    if (*hy < 0) { return false; }
+    if ((usz) *hy >= height) { *hy = height-1; }
+
+    return true;
+}
+
+fn bool barycentric(int x1, int y1, int x2, int y2, int x3, int y3, int xp, int yp, int *u1, int *u2, int *det) {
+    *det = ((x1 - x3)*(y2 - y3) - (x2 - x3)*(y1 - y3));
+    *u1  = ((y2 - y3)*(xp - x3) + (x3 - x2)*(yp - y3));
+    *u2  = ((y3 - y1)*(xp - x3) + (x1 - x3)*(yp - y3));
+    int u3 = *det - *u1 - *u2;
+    return ((sign(*u1) == sign(*det) || *u1 == 0) &&
+        (sign(*u2) == sign(*det) || *u2 == 0) &&
+        (sign(u3) == sign(*det) || u3 == 0));
 }
 
 extern fn void setClipboardText(char *text) @export("setClipboardText") @wasm;

@@ -1,6 +1,7 @@
 import Vic3 from './vic3.mjs';
 
 const demos = [
+	{ name: 'showcase', wasm: 'build/showcase.wasm', canvas: document.querySelector('.showcase-demo') },
 	{ name: 'ball', wasm: 'build/ball.wasm', canvas: document.querySelector('.ball-demo') },
 	{ name: 'cursors', wasm: 'build/cursors.wasm', canvas: document.querySelector('.cursors-demo') },
 	{ name: 'input-keys', wasm: 'build/input-keys.wasm', canvas: document.querySelector('.input-keys-demo') },

@@ -2,6 +2,11 @@ const { spawn } = require('child_process');
 
 const demos = [
     {
+        name: "showcase",
+        sources: ["./demos/showcase.c3", "./vi.c3"],
+        out: "./build/showcase"
+    },
+    {
         name: "ball",
         sources: ["./demos/ball.c3", "./vi.c3"],
         out: "./build/ball"
