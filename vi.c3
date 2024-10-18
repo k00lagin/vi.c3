@@ -38,16 +38,16 @@ enum BlendMode : uint {
 BlendMode currentBlendMode = BlendMode.ALPHA;
 
 struct Canvas {
-    usz width;
-    usz height;
+    uint width;
+    uint height;
     Color[*] pixels;
 }
 Canvas *defaultCanvas;
 Canvas *currentCanvas;
 IntVector4 drawArea = IntVector4 { 0, 0, 0, 0 }; // sets by setScissor, restrict draw area, if zeros - whole canvas
 
-extern fn void connectCanvas(Canvas *canvas) @export("connectCanvas") @wasm;
-fn Canvas *initWindow(usz width, usz height) {
+extern fn void connectCanvas(Canvas *canvas) @extern("connectCanvas") @wasm;
+fn Canvas *initWindow(uint width, uint height) {
     defaultCanvas = newCanvas(width, height);
     currentCanvas = defaultCanvas;
     connectCanvas(defaultCanvas);
@@ -55,47 +55,29 @@ fn Canvas *initWindow(usz width, usz height) {
 }
 
 fn Color hsvToRGB(float hue, float saturation, float value, float alpha) { // h: 0-360, s: 0-1, v: 0-1, a: 0-1
-    char r, g, b;
+    float[3] k = { 5.0, 3.0, 1.0 };
+    float[3] color;
+    for (int i = 0; i < 3; ++i) {
+        k[i] = (k[i] + hue / 60.0) % 6.0;
+        k[i] = math::min(math::max(math::min(4.0f - k[i], k[i]), 0.0f), 1.0f);
+        color[i] = (value - value * saturation * k[i]) * 255.0f;
+    }
 
-    // Red channel
-    float k = (5.0 + hue / 60.0) % 6;
-    float t = 4.0 - k;
-    k = (t < k)? t : k;
-    k = (k < 1)? k : 1;
-    k = (k > 0)? k : 0;
-    r = (char)(((value - value*saturation*k)*255));
-
-    // Green channel
-    k = (3.0 + hue / 60.0) % 6;
-    t = 4.0 - k;
-    k = (t < k)? t : k;
-    k = (k < 1)? k : 1;
-    k = (k > 0)? k : 0;
-    g = (char)(((value - value*saturation*k)*255));
-
-    // Blue channel
-    k = (1.0 + hue / 60.0) % 6;
-    t = 4.0 - k;
-    k = (t < k)? t : k;
-    k = (k < 1)? k : 1;
-    k = (k > 0)? k : 0;
-    b = (char)(((value - value*saturation*k)*255));
-
-    return Color { r, g, b, (char)(alpha * 255) };
+    return Color { (char)color[0], (char)color[1], (char)color[2], (char)(alpha * 255) };
 }
 
-fn Canvas *newCanvas(usz width, usz height) {
+fn Canvas *newCanvas(uint width, uint height) {
     Canvas *canvas = mem::calloc(Canvas.sizeof + width * height * Color.sizeof);
     canvas.width = width;
     canvas.height = height;
-    for (usz i = 0; i < width * height; i++) {
+    for (uint i = 0; i < width * height; ++i) {
         canvas.pixels[i] = Color { 0, 0, 0, 0 };
     }
     return canvas;
 }
 
 fn void Canvas.clearBackground(&canvas, Color color) {
-    for (usz i = 0; i < canvas.width * canvas.height; i++) {
+    for (uint i = 0; i < canvas.width * canvas.height; ++i) {
         canvas.pixels[i] = color;
     }
 }
@@ -211,7 +193,7 @@ fn void Canvas.drawTriangleLines(&canvas, int x1, int y1, int x2, int y2, int x3
 }
 
 // Draw a line
-fn void Canvas.drawLine(&canvas, int x1, int y1, int x2, int y2, Color color) @export("drawLine") @wasm {
+fn void Canvas.drawLine(&canvas, int x1, int y1, int x2, int y2, Color color) @extern("drawLine") @wasm {
     int dx = x2 - x1;
     int dy = y2 - y1;
 
@@ -265,8 +247,13 @@ fn void Canvas.mask(&mask, Canvas *target, int maskX, int maskY, int width, int 
     for (int x = 0; x < math::min(width, mask.width - maskX); ++x) {
         for (int y = 0; y < math::min(height, mask.height - maskY); ++y) {
             Color mask_pixel = mask.pixels[(maskY + y) * mask.width + (maskX + x)];
+            Color target_pixel = target.pixels[(targetY + y) * target.width + (targetX + x)];
             if (mask_pixel.a == 0) {
-                target.pixels[(targetY + y) * target.width + (targetX + x)] = Color { 0, 0, 0, 0 };
+                target.pixels[(targetY + y) * target.width + (targetX + x)].a = (char)0;
+            } else if (target_pixel.a == 255) {
+                target.pixels[(targetY + y) * target.width + (targetX + x)].a = mask_pixel.a;
+            } else if (mask_pixel.a < 255) {
+                target.pixels[(targetY + y) * target.width + (targetX + x)].a = (char)(target_pixel.a * mask_pixel.a / 255 / 255);
             }
         }
     }
@@ -339,10 +326,10 @@ fn bool barycentric(int x1, int y1, int x2, int y2, int x3, int y3, int xp, int 
         (sign(u3) == sign(*det) || u3 == 0));
 }
 
-extern fn void setClipboardText(char *text) @export("setClipboardText") @wasm;
-extern fn void openURL(char *text) @export("openURL") @wasm;
+extern fn void setClipboardText(char *text) @extern("setClipboardText") @wasm;
+extern fn void openURL(char *text) @extern("openURL") @wasm;
 
-extern fn void quit() @export("shouldQuit") @wasm;
+extern fn void quit() @extern("shouldQuit") @wasm;
 
 module vi::kb;
 
@@ -351,15 +338,15 @@ const ARROW_LEFT = 37;
 const ARROW_UP = 38;
 const ARROW_DOWN = 40;
 
-extern fn bool isKeyDown(char key) @export("isKeyDown") @wasm;
+extern fn bool isKeyDown(char key) @extern("isKeyDown") @wasm;
 
 module vi::mouse;
 
-extern fn void getPosition(IntVector2 *resultPtr) @export("Mouse_getPosition") @wasm;
-extern fn int getX() @export("Mouse_getX") @wasm;
-extern fn int getY() @export("Mouse_getY") @wasm;
-extern fn bool isDown(char button) @export("Mouse_isDown") @wasm; // 0-4 https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/button
-extern fn void setCursor(char *cursor) @export("Mouse_setCursor") @wasm;
+extern fn void getPosition(IntVector2 *resultPtr) @extern("Mouse_getPosition") @wasm;
+extern fn int getX() @extern("Mouse_getX") @wasm;
+extern fn int getY() @extern("Mouse_getY") @wasm;
+extern fn bool isDown(char button) @extern("Mouse_isDown") @wasm; // 0-4 https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/button
+extern fn void setCursor(char *cursor) @extern("Mouse_setCursor") @wasm;
 
 module vi::js;
 
