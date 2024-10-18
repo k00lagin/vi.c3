@@ -19,11 +19,6 @@ def IntVector4 = int[<4>];
     // 	*y = t;
     // }
 */
-macro sign(int x) {
-    if (x > 0) { return 1; }
-    else if (x < 0) { return -1; }
-    else { return 0; }
-}
 
 fn void swap(int* x, int* y) {
     int t = *x;
@@ -59,7 +54,7 @@ fn Color hsvToRGB(float hue, float saturation, float value, float alpha) { // h:
     float[3] color;
     for (int i = 0; i < 3; ++i) {
         k[i] = (k[i] + hue / 60.0) % 6.0;
-        k[i] = math::min(math::max(math::min(4.0f - k[i], k[i]), 0.0f), 1.0f);
+        k[i] = math::clamp(math::min(4.0f - k[i], k[i]), 0.0f, 1.0f);
         color[i] = (value - value * saturation * k[i]) * 255.0f;
     }
 
@@ -321,9 +316,9 @@ fn bool barycentric(int x1, int y1, int x2, int y2, int x3, int y3, int xp, int 
     *u1  = ((y2 - y3)*(xp - x3) + (x3 - x2)*(yp - y3));
     *u2  = ((y3 - y1)*(xp - x3) + (x1 - x3)*(yp - y3));
     int u3 = *det - *u1 - *u2;
-    return ((sign(*u1) == sign(*det) || *u1 == 0) &&
-        (sign(*u2) == sign(*det) || *u2 == 0) &&
-        (sign(u3) == sign(*det) || u3 == 0));
+    return ((math::sign(*u1) == math::sign(*det) || *u1 == 0) &&
+        (math::sign(*u2) == math::sign(*det) || *u2 == 0) &&
+        (math::sign(u3) == math::sign(*det) || u3 == 0));
 }
 
 extern fn void setClipboardText(char *text) @extern("setClipboardText") @wasm;
@@ -350,7 +345,7 @@ extern fn void setCursor(char *cursor) @extern("Mouse_setCursor") @wasm;
 
 module vi::js;
 
-extern fn float getRandomValue(int min, int max) @export("getRandomValue") @wasm;
+extern fn float getRandomValue(int min, int max) @extern("getRandomValue") @wasm;
 
 // Here'll be temporary *Borrow-functions*. They borrow given canvas to js, draw stuff, and rewrite pixels in raw memory.
 // **BEWARE** The memory passing back and forth in a single frame will heavily influence performance
