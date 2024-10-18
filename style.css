@@ -73,3 +73,37 @@ blockquote.warning {
     padding: 0 1rem;
     box-sizing: border-box;
 }
+
+@property --c3-from {
+  syntax: "<color>";
+  initial-value: rgb(124, 58, 237);
+  inherits: false;
+}
+
+@property --c3-to {
+  syntax: "<color>";
+  initial-value: rgb(37, 99, 235);
+  inherits: false;
+}
+
+.c3-link {
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", Segoe UI Symbol, "Noto Color Emoji";
+  color: transparent;
+  text-decoration: none;
+  background-clip: text;
+  background-image: linear-gradient(to left, var(--c3-from), var(--c3-to));
+  transition: --c3-from 0.5s, --c3-to 0.5s;
+}
+
+.c3-link:hover {
+  color: transparent;
+  --c3-from: rgb(37, 99, 235);
+  --c3-to: rgb(124, 58, 237);
+}
+
+.c3-link:active {
+  color: transparent;
+  --c3-from: var(--red / 100%);
+  --c3-to: var(--red / 100%);
+}
