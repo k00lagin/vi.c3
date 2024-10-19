@@ -285,7 +285,7 @@ fn bool checkCollisionPointRec(IntVector2 point, IntVector4 rect) {
     return false;
 }
 
-fn bool normalizeTriangle(usz width, usz height, int x1, int y1, int x2, int y2, int x3, int y3, int *lx, int *hx, int *ly, int *hy) {
+fn bool normalizeTriangle(uint width, uint height, int x1, int y1, int x2, int y2, int x3, int y3, int *lx, int *hx, int *ly, int *hy) {
     *lx = x1;
     *hx = x1;
     if (*lx > x2) { *lx = x2; }
@@ -293,9 +293,9 @@ fn bool normalizeTriangle(usz width, usz height, int x1, int y1, int x2, int y2,
     if (*hx < x2) { *hx = x2; }
     if (*hx < x3) { *hx = x3; }
     if (*lx < 0) { *lx = 0; }
-    if ((usz) *lx >= width) { return false; }
+    if ((uint) *lx >= width) { return false; }
     if (*hx < 0) { return false; }
-    if ((usz) *hx >= width) { *hx = width-1; }
+    if ((uint) *hx >= width) { *hx = width-1; }
 
     *ly = y1;
     *hy = y1;
@@ -304,9 +304,9 @@ fn bool normalizeTriangle(usz width, usz height, int x1, int y1, int x2, int y2,
     if (*hy < y2) { *hy = y2; }
     if (*hy < y3) { *hy = y3; }
     if (*ly < 0) { *ly = 0; }
-    if ((usz) *ly >= height) { return false; }
+    if ((uint) *ly >= height) { return false; }
     if (*hy < 0) { return false; }
-    if ((usz) *hy >= height) { *hy = height-1; }
+    if ((uint) *hy >= height) { *hy = height-1; }
 
     return true;
 }
@@ -352,4 +352,4 @@ extern fn float getRandomValue(int min, int max) @extern("getRandomValue") @wasm
 // You can avoid it by drawing everything once at the start of the programm to a separate canvas
 // and then just draw this canvas to your actual render target
 // TODO: maybe I should use freetype?
-extern fn void drawText(Canvas *canvas, char *text, int posX, int posY, int fontSize, Color *color) @export("drawText") @wasm;
+extern fn void drawText(Canvas *canvas, char *text, int posX, int posY, int fontSize, Color *color) @extern("drawText") @wasm;
