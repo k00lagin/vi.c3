@@ -9,6 +9,8 @@ def IntVector2 = int[<2>];
 def Vector4 = float[<4>];
 def IntVector4 = int[<4>];
 
+extern fn float fpow(float x, float exp) @extern("fpow") @wasm;
+
 /*
     // C3 implementation of swap macro
     // looks fine, but not working for some reason in my particular case
@@ -61,8 +63,57 @@ fn Color hsvToRGB(float hue, float saturation, float value, float alpha) { // h:
     return Color { (char)color[0], (char)color[1], (char)color[2], (char)(alpha * 255) };
 }
 
+struct Oklch {
+    float l; // Lightness (0 to 1)
+    float c; // Chroma (0 to 1)
+    float h; // Hue (in degrees, 0 to 360)
+    float a; // Alpha (0 to 1)
+}
+
+// Function to convert OKLCH to sRGB (0-255)
+fn Color oklchToRGB(Oklch oklch) {
+    // Convert hue from degrees to radians
+    float h_rad = oklch.h * (math::PI / 180.0f);
+
+    // Convert OKLCH to Oklab
+    float lab_1 = oklch.l;
+	float lab_2 = oklch.c * math::cos(h_rad);
+    float lab_3 = oklch.c * math::sin(h_rad);
+
+    // Oklab to linear LMS
+    float l_ = lab_1 + 0.3963377774 * lab_2 + 0.2158037573 * lab_3;
+    float m_ = lab_1 - 0.1055613458 * lab_2 - 0.0638541728 * lab_3;
+    float s_ = lab_1 - 0.0894841775 * lab_2 - 1.2914855480 * lab_3;
+
+    // Cube the values
+    float l_cubed = l_ * l_ * l_;
+    float m_cubed = m_ * m_ * m_;
+    float s_cubed = s_ * s_ * s_;
+
+    // Linear RGB
+    float r_linear =  4.0767416621 * l_cubed - 3.3077115913 * m_cubed + 0.2309699292 * s_cubed;
+    float g_linear = -1.2684380046 * l_cubed + 2.6097574011 * m_cubed - 0.3413193965 * s_cubed;
+    float b_linear = -0.0041960863 * l_cubed - 0.7034186147 * m_cubed + 1.7076147010 * s_cubed;
+
+    // Apply gamma correction to convert linear RGB to sRGB
+    float r_srgb = (r_linear <= 0.0031308f) ? 12.92f * r_linear : 1.055f * fpow(r_linear, 1.0f / 2.4f) - 0.055f;
+    float g_srgb = (g_linear <= 0.0031308f) ? 12.92f * g_linear : 1.055f * fpow(g_linear, 1.0f / 2.4f) - 0.055f;
+    float b_srgb = (b_linear <= 0.0031308f) ? 12.92f * b_linear : 1.055f * fpow(b_linear, 1.0f / 2.4f) - 0.055f;
+
+    Color rgba = { // Clamp values to range [0, 255]
+        (char)(math::clamp(r_srgb * 255.0, 0.0, 255.0)),
+        (char)(math::clamp(g_srgb * 255.0, 0.0, 255.0)),
+        (char)(math::clamp(b_srgb * 255.0, 0.0, 255.0)),
+        (char)(math::clamp(oklch.a * 255.0, 0.0, 255.0))
+    };
+
+    // Color rgba = { 230, 230, 230, 255 };
+
+    return rgba;
+}
+
 fn Canvas *newCanvas(uint width, uint height) {
-    Canvas *canvas = mem::calloc(Canvas.sizeof + width * height * Color.sizeof);
+    Canvas *canvas = mem::calloc((Canvas.sizeof + (ulong)(width * height) * Color.sizeof));
     canvas.width = width;
     canvas.height = height;
     for (uint i = 0; i < width * height; ++i) {

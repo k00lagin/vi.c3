@@ -7,6 +7,11 @@ const demos = [
         out: "./build/showcase"
     },
     {
+        name: "oklch",
+        sources: ["./demos/oklch.c3", "./vi.c3"],
+        out: "./build/oklch"
+    },
+    {
         name: "ball",
         sources: ["./demos/ball.c3", "./vi.c3"],
         out: "./build/ball"
@@ -62,7 +67,7 @@ if (!0) {
             "--reloc=none",
             "--target", "wasm32",
             "--single-module=yes",
-            "-g0", "--link-libc=no", "--no-entry",
+            "-O5", "-g0", "--link-libc=no", "--no-entry",
             "-o", demo.out,
             "-z", "--export-table",
             "-z", "--allow-undefined",
