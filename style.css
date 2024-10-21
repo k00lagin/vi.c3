@@ -1,109 +1,112 @@
 :root,
 body {
-    background-color: rgb(var(--black) / 100%);
-    color: rgb(var(--white) / 100%);
-    font-family: 'VT323', monospace;
-    height: 100%;
+	background-color: rgb(var(--black) / 100%);
+	color: rgb(var(--white) / 100%);
+	font-family: 'VT323', monospace;
+	height: 100%;
 
-    --white: 230 200 200;
-    --black: 8 8 18;
-    --red: 236 72 153;
+	--white: 230 200 200;
+	--black: 8 8 18;
+	--red: 236 72 153;
 }
 
 body {
-    display: flex;
-    flex-flow: row nowrap;
-    margin: 0;
-    overflow: hidden;
+	display: flex;
+	flex-flow: row nowrap;
+	margin: 0;
+	overflow: hidden;
 }
 
 aside {
-    width: 18rem;
-    flex-shrink: 0;
-    border-right: 0.5px solid rgb(var(--white) / 50%);
+	width: 18rem;
+	flex-shrink: 0;
+	border-right: 0.5px solid rgb(var(--white) / 50%);
 }
 
 aside nav ul {
-    list-style: none;
-    display: flex;
-    flex-flow: column nowrap;
-    gap: 0.5rem;
+	list-style: none;
+	display: flex;
+	flex-flow: column nowrap;
+	gap: 0.5rem;
 }
 
 main {
-    display: flex;
-    flex-flow: column nowrap;
-    gap: 1rem;
-    align-items: center;
-    flex-grow: 1;
-    padding: 0 3rem 3rem;
-    overscroll-behavior: none;
-    overflow: auto;
+	display: flex;
+	flex-flow: column nowrap;
+	gap: 1rem;
+	align-items: center;
+	flex-grow: 1;
+	padding: 0 3rem 3rem;
+	overscroll-behavior: none;
+	overflow: auto;
 }
 
-h1, h2, h3, p {
-    width: 100%;
+h1,
+h2,
+h3,
+p {
+	width: 100%;
 }
 
 a {
-    color: var(--white);
-    font-weight: 600;
+	color: var(--white);
+	font-weight: 600;
 }
 a:hover {
-    color: color-mix(in srgb, rgb(var(--white) / 100%) 50%, rgb(var(--red) / 100%));
+	color: color-mix(in srgb, rgb(var(--white) / 100%) 50%, rgb(var(--red) / 100%));
 }
 a:active {
-    color: rgb(var(--red) / 100%);
+	color: rgb(var(--red) / 100%);
 }
 
 canvas {
-    border: 0.5px solid rgb(var(--white) / 50%);
+	border: 0.5px solid rgb(var(--white) / 50%);
 }
 
 canvas:focus {
-    border: 1px solid rgb(var(--red) / 100%);
-    outline: 2px solid rgb(var(--red) / 100%);
+	border: 1px solid rgb(var(--red) / 100%);
+	outline: 2px solid rgb(var(--red) / 100%);
 }
 
 blockquote.warning {
-    margin: 0;
-    width: 100%;
-    background-color: rgb(var(--red) / 10%);
-    border-left: 4px solid rgb(var(--red) / 100%);
-    padding: 0 1rem;
-    box-sizing: border-box;
+	margin: 0;
+	width: 100%;
+	background-color: rgb(var(--red) / 10%);
+	border-left: 4px solid rgb(var(--red) / 100%);
+	padding: 0 1rem;
+	box-sizing: border-box;
 }
 
 @property --c3-from {
-  syntax: "<color>";
-  initial-value: rgb(124, 58, 237);
-  inherits: false;
+	syntax: '<color>';
+	initial-value: rgb(124, 58, 237);
+	inherits: false;
 }
 
 @property --c3-to {
-  syntax: "<color>";
-  initial-value: rgb(37, 99, 235);
-  inherits: false;
+	syntax: '<color>';
+	initial-value: rgb(37, 99, 235);
+	inherits: false;
 }
 
 .c3-link {
-  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", Segoe UI Symbol, "Noto Color Emoji";
-  color: transparent;
-  text-decoration: none;
-  background-clip: text;
-  background-image: linear-gradient(to left, var(--c3-from), var(--c3-to));
-  transition: --c3-from 0.5s, --c3-to 0.5s;
+	font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+		Segoe UI Symbol, 'Noto Color Emoji';
+	color: transparent;
+	text-decoration: none;
+	background-clip: text;
+	background-image: linear-gradient(to left, var(--c3-from), var(--c3-to));
+	transition: --c3-from 0.5s, --c3-to 0.5s;
 }
 
 .c3-link:hover {
-  color: transparent;
-  --c3-from: rgb(37, 99, 235);
-  --c3-to: rgb(124, 58, 237);
+	color: transparent;
+	--c3-from: rgb(37, 99, 235);
+	--c3-to: rgb(124, 58, 237);
 }
 
 .c3-link:active {
-  color: transparent;
-  --c3-from: var(--red / 100%);
-  --c3-to: var(--red / 100%);
+	color: transparent;
+	--c3-from: var(--red / 100%);
+	--c3-to: var(--red / 100%);
 }

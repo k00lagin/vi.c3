@@ -1,74 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Vic3 library docs and demos</title>
+		<link rel="stylesheet" href="style.css" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+	</head>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vic3 library docs and demos</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-</head>
+	<body>
+		<aside>
+			<nav>
+				<ul>
+					<li>
+						<a href="#top">
+							<img width="128px" src="assets/vic3.svg" alt="Vic3 logo in Roustel font" />
+						</a>
+					</li>
+					<li><a href="#demos">Demos</a></li>
+					<li><a href="#oklch-demo">OKLCH</a></li>
+					<li><a href="#ball-demo">Ball</a></li>
+					<li><a href="#cursors-demo">Mouse Interactions</a></li>
+					<li><a href="#input-keys-demo">Input Keys</a></li>
+					<li><a href="#blend-modes-demo">Blend Modes</a></li>
+					<li><a href="#retro-demo">Retro</a></li>
+				</ul>
+			</nav>
+		</aside>
+		<main>
+			<h1 id="top">Vic3</h1>
 
-<body>
-    <aside>
-        <nav>
-            <ul>
-                <li><a href="#top">
-                    <img width="128px" src="assets/vic3.svg" alt="Vic3 logo in Roustel font">
-                </a></li>
-                <li><a href="#demos">Demos</a></li>
-                <li><a href="#oklch-demo">OKLCH</a></li>
-                <li><a href="#ball-demo">Ball</a></li>
-                <li><a href="#cursors-demo">Mouse Interactions</a></li>
-                <li><a href="#input-keys-demo">Input Keys</a></li>
-                <li><a href="#blend-modes-demo">Blend Modes</a></li>
-                <li><a href="#retro-demo">Retro</a></li>
-            </ul>
-        </nav>
-    </aside>
-    <main>
-        <h1 id="top">Vic3</h1>
+			<blockquote class="warning">
+				<p>
+					This Library is a work In Progress! Anything can change at any moment without any notice!
+					Use this Library at your own risk!
+				</p>
+			</blockquote>
 
-        <blockquote class="warning">
-            <p>This Library is a work In Progress! Anything can change at any moment without any notice! Use this Library at your own risk!</p>
-        </blockquote>
+			<canvas
+				style="align-self: flex-start; border: none"
+				title="This image is built with Vic3 capabilities. It's re rendering each time you refresh the page."
+				class="showcase-demo"
+			></canvas>
 
-        <canvas style="align-self: flex-start; border: none;"
-            title="This image is built with Vic3 capabilities. It's re rendering each time you refresh the page."
-            class="showcase-demo"
-        ></canvas>
+			<p>
+				Vic3 is a work-in-progress library for building apps and games for Web with WebAssembly and
+				<a class="c3-link" href="https://c3-lang.org/">C3</a> language.
+			</p>
+			<p>
+				It's taking inspiration from (alphabetically): <a href="https://love2d.org/">Love 2d</a>,
+				<a href="https://github.com/tsoding/olive.c">olive.c</a>,
+				<a href="https://www.raylib.com/">Raylib</a>, and
+				<a href="https://github.com/tsoding/zozlib.js">zozlib.js</a>.
+			</p>
 
-        <p>Vic3 is a work-in-progress library for building apps and games for Web with WebAssembly and <a class="c3-link" href="https://c3-lang.org/">C3</a> language.</p>
-        <p>It's taking inspiration from (alphabetically): <a href="https://love2d.org/">Love 2d</a>, <a href="https://github.com/tsoding/olive.c">olive.c</a>, <a href="https://www.raylib.com/">Raylib</a>, and <a href="https://github.com/tsoding/zozlib.js">zozlib.js</a>.</p>
-    
-        <blockquote class="warning">
-            <p>We are intentionally rendering on HTML 2D Canvas without employing any hardware acceleration to see how much we can push the boundaries of the software rendering implemented in <a class="c3-link" href="https://c3-lang.org/">C3</a> and WebAssembly running in Browser. So the renderer may run unexpectedly slow on some machines and browsers, but we are working it.</p>
-        </blockquote>
+			<blockquote class="warning">
+				<p>
+					We are intentionally rendering on HTML 2D Canvas without employing any hardware
+					acceleration to see how much we can push the boundaries of the software rendering
+					implemented in <a class="c3-link" href="https://c3-lang.org/">C3</a> and WebAssembly
+					running in Browser. So the renderer may run unexpectedly slow on some machines and
+					browsers, but we are working it.
+				</p>
+			</blockquote>
 
-        <h2 id="demos">Demos</h2>
-        <h3 id="oklch-demo">OKLCH gradient (converted to RGB colorspace)</h3>
-        <canvas class="oklch-demo" tabindex="-1"></canvas>
+			<h2 id="demos">Demos</h2>
+			<h3 id="oklch-demo">OKLCH gradient (converted to RGB colorspace)</h3>
+			<canvas class="oklch-demo" tabindex="-1"></canvas>
 
-        <h3 id="ball-demo">Tsoding's Ball</h3>
-        <canvas class="ball-demo" tabindex="-1"></canvas>
+			<h3 id="ball-demo">Tsoding's Ball</h3>
+			<canvas class="ball-demo" tabindex="-1"></canvas>
 
-        <h3 id="cursors-demo">CSS Cursors</h3>
-        <p>Click the cursor box, you'll get respective CSS rule to the clipboard.</p>
-        <canvas class="cursors-demo" tabindex="-1"></canvas>
+			<h3 id="cursors-demo">CSS Cursors</h3>
+			<p>Click the cursor box, you'll get respective CSS rule to the clipboard.</p>
+			<canvas class="cursors-demo" tabindex="-1"></canvas>
 
-        <h3 id="input-keys-demo">Input Keys</h3>
-        <canvas class="input-keys-demo" tabindex="-1"></canvas>
+			<h3 id="input-keys-demo">Input Keys</h3>
+			<canvas class="input-keys-demo" tabindex="-1"></canvas>
 
-        <h3 id="blend-modes-demo">Blend Modes</h3>
-        <canvas class="blend-modes-demo" tabindex="-1"></canvas>
+			<h3 id="blend-modes-demo">Blend Modes</h3>
+			<canvas class="blend-modes-demo" tabindex="-1"></canvas>
 
-        <h3 id="retro-demo">Retro animation WIP</h3>
-        <canvas class="retro-demo" tabindex="-1"></canvas>
-    </main>
+			<h3 id="retro-demo">Retro animation WIP</h3>
+			<canvas class="retro-demo" tabindex="-1"></canvas>
+		</main>
 
-    <script type="module" src="vic3.mjs"></script>
-    <script type="module" src="main.js"></script>
-</body>
+		<script type="module" src="vic3.mjs"></script>
+		<script type="module" src="main.js"></script>
+	</body>
 </html>
