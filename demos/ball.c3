@@ -25,7 +25,7 @@ fn void draw(float dt) @export("draw") @wasm {
 	if (x - BALL_RADIUS < 0 || x + BALL_RADIUS >= WIDTH) {
 		ball_velocity.x *= -1;
 		ball_hue = (ball_hue + 5.0f) % 360;
-		ball_color = vi::oklchToRGB(Oklch { 0.8f, 0.75f, ball_hue, 1.0f });
+		ball_color = vi::oklchToRGB(Oklch { 0.85f, 0.35f, ball_hue, 1.0f });
 	} else {
 		ball_position.x = x;
 	}
@@ -33,7 +33,7 @@ fn void draw(float dt) @export("draw") @wasm {
 	if (y - BALL_RADIUS < 0 || y + BALL_RADIUS >= HEIGHT) {
 		ball_velocity.y *= -1;
 		ball_hue = (ball_hue + 5.0f) % 360;
-		ball_color = vi::oklchToRGB(Oklch { 0.8f, 0.75f, ball_hue, 1.0f });
+		ball_color = vi::oklchToRGB(Oklch { 0.85f, 0.35f, ball_hue, 1.0f });
 	} else {
 		ball_position.y = y;
 	}
@@ -43,7 +43,7 @@ fn void draw(float dt) @export("draw") @wasm {
 fn void main() @export("main") @wasm {
     ball_position = Vector2 { WIDTH / 2, HEIGHT / 2 };
 	ball_hue = (float)js::getRandomValue(0, 360);
-	ball_color = vi::oklchToRGB(Oklch { 0.8f, 0.75f, ball_hue, 1.0f });
+	ball_color = vi::oklchToRGB(Oklch { 0.85f, 0.35f, ball_hue, 1.0f });
 
 	vi::initWindow(WIDTH, HEIGHT);
 }
