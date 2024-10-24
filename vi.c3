@@ -131,7 +131,7 @@ fn void Canvas.clearBackground(&canvas, Color color) {
 // Basic shapes drawing functions
 
 // Draw a pixel
-fn void Canvas.drawPixel(&canvas, int posX, int posY, Color color) {
+fn void Canvas.putPixel(&canvas, int posX, int posY, Color color) {
     if (posX < 0 || posX >= canvas.width || posY < 0 || posY >= canvas.height) {
         return;
     }
@@ -154,8 +154,8 @@ fn void Canvas.drawPixel(&canvas, int posX, int posY, Color color) {
 }
 
 // Draw a pixel (Vector version)
-fn void Canvas.drawPixelV(&canvas, IntVector2 position, Color color) {
-    Canvas.drawPixel(canvas, position.x, position.y, color);
+fn void Canvas.putPixelV(&canvas, IntVector2 position, Color color) {
+    Canvas.putPixel(canvas, position.x, position.y, color);
 }
 
 // Draw a color-filled circle
@@ -165,14 +165,14 @@ fn void Canvas.drawCircle(&canvas, int centerX, int centerY, float radius, Color
     int d = 3 - 2 * (int)radius;
     
     while (y >= x) {
-        canvas.drawPixel(centerX + x, centerY + y, color);
-        canvas.drawPixel(centerX - x, centerY + y, color);
-        canvas.drawPixel(centerX + x, centerY - y, color);
-        canvas.drawPixel(centerX - x, centerY - y, color);
-        canvas.drawPixel(centerX + y, centerY + x, color);
-        canvas.drawPixel(centerX - y, centerY + x, color);
-        canvas.drawPixel(centerX + y, centerY - x, color);
-        canvas.drawPixel(centerX - y, centerY - x, color);
+        canvas.putPixel(centerX + x, centerY + y, color);
+        canvas.putPixel(centerX - x, centerY + y, color);
+        canvas.putPixel(centerX + x, centerY - y, color);
+        canvas.putPixel(centerX - x, centerY - y, color);
+        canvas.putPixel(centerX + y, centerY + x, color);
+        canvas.putPixel(centerX - y, centerY + x, color);
+        canvas.putPixel(centerX + y, centerY - x, color);
+        canvas.putPixel(centerX - y, centerY - x, color);
         
         if (d < 0) {
             d += 4 * x + 6;
@@ -186,7 +186,7 @@ fn void Canvas.drawCircle(&canvas, int centerX, int centerY, float radius, Color
     for (int py = -1 * (int)radius; py <= (int)radius; ++py) {
         for (int px = -1 * (int)radius; px <= (int)radius; ++px) {
             if (px * px + py * py <= (int)radius * (int)radius) {
-                canvas.drawPixel(centerX + px, centerY + py, color);
+                canvas.putPixel(centerX + px, centerY + py, color);
             }
         }
     }
@@ -196,7 +196,7 @@ fn void Canvas.drawCircle(&canvas, int centerX, int centerY, float radius, Color
 fn void Canvas.drawRectangle(&canvas, int posX, int posY, int width, int height, Color color) {
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            canvas.drawPixel(posX + x, posY + y, color);
+            canvas.putPixel(posX + x, posY + y, color);
         }
     }
 }
@@ -209,12 +209,12 @@ fn void Canvas.drawRectangleV(&canvas, IntVector2 position, IntVector2 size, Col
 // Draw rectangle outline
 fn void Canvas.drawRectangleLines(&canvas, int posX, int posY, int width, int height, Color color) {
     for (int y = 0; y < height; ++y) {
-        canvas.drawPixel(posX, posY + y, color);
-        canvas.drawPixel(posX + width - 1, posY + y, color);
+        canvas.putPixel(posX, posY + y, color);
+        canvas.putPixel(posX + width - 1, posY + y, color);
     }
     for (int x = 0; x < width; ++x) {
-        canvas.drawPixel(posX + x, posY, color);
-        canvas.drawPixel(posX + x, posY + height - 1, color);
+        canvas.putPixel(posX + x, posY, color);
+        canvas.putPixel(posX + x, posY + height - 1, color);
     }
 }
 
@@ -225,7 +225,7 @@ fn void Canvas.drawTriangle(&canvas, int x1, int y1, int x2, int y2, int x3, int
             for (int x = lx; x <= hx; ++x) {
                 int u1, u2, det;
                 if (vi::barycentric(x1, y1, x2, y2, x3, y3, x, y, &u1, &u2, &det)) {
-                    canvas.drawPixel(x, y, color);
+                    canvas.putPixel(x, y, color);
                 }
             }
         }
@@ -245,7 +245,7 @@ fn void Canvas.drawLine(&canvas, int x1, int y1, int x2, int y2, Color color) @e
 
     // If both of the differences are 0 there will be a division by 0 below.
     if (dx == 0 && dy == 0) {
-        canvas.drawPixel(x1, y1, color);
+        canvas.putPixel(x1, y1, color);
         return;
     }
 
@@ -258,7 +258,7 @@ fn void Canvas.drawLine(&canvas, int x1, int y1, int x2, int y2, Color color) @e
         for (int x = x1; x <= x2; ++x) {
             int y = dy*(x - x1)/dx + y1;
             // TODO: move boundary checks out side of the loops in olivec_draw_line
-            canvas.drawPixel(x, y, color);
+            canvas.putPixel(x, y, color);
         }
     } else {
         if (y1 > y2) {
@@ -269,7 +269,7 @@ fn void Canvas.drawLine(&canvas, int x1, int y1, int x2, int y2, Color color) @e
         for (int y = y1; y <= y2; ++y) {
             int x = dx*(y - y1)/dy + x1;
             // TODO: move boundary checks out side of the loops in olivec_draw_line
-            canvas.drawPixel(x, y, color);
+            canvas.putPixel(x, y, color);
         }
     }
 }
@@ -283,7 +283,7 @@ fn void Canvas.draw(&canvas, Canvas *target, int sourceX, int sourceY, int width
         for (int y = 0; y < math::min(height, canvas.height - sourceY); ++y) {
             Color pixel = canvas.pixels[(sourceY + y) * canvas.width + (sourceX + x)];
             if (pixel.a > 0) {
-                target.drawPixel(targetX + x, targetY + y, pixel);
+                target.putPixel(targetX + x, targetY + y, pixel);
             }
         }
     }
@@ -306,8 +306,8 @@ fn void Canvas.mask(&mask, Canvas *target, int maskX, int maskY, int width, int 
 }
 
 fn void clearBackground(Color color) { Canvas.clearBackground(currentCanvas, color); }
-fn void drawPixel(int x, int y, Color color) { Canvas.drawPixel(currentCanvas, x, y, color); }
-fn void drawPixelV(IntVector2 position, Color color) { Canvas.drawPixelV(currentCanvas, position, color); }
+fn void putPixel(int x, int y, Color color) { Canvas.putPixel(currentCanvas, x, y, color); }
+fn void putPixelV(IntVector2 position, Color color) { Canvas.putPixelV(currentCanvas, position, color); }
 fn void drawCircle(int centerX, int centerY, float radius, Color color) { Canvas.drawCircle(currentCanvas, centerX, centerY, radius, color); }
 fn void drawRectangle(int posX, int posY, int width, int height, Color color) { Canvas.drawRectangle(currentCanvas, posX, posY, width, height, color); }
 fn void drawRectangleV(IntVector2 position, IntVector2 size, Color color) { Canvas.drawRectangleV(currentCanvas, position, size, color); }
