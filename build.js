@@ -3,37 +3,37 @@ const { spawn } = require('child_process');
 const demos = [
     {
         name: "showcase",
-        sources: ["./demos/showcase.c3", "./vi.c3"],
+        sources: ["./demos/showcase.c3", "./vic3-src/vi.c3"],
         out: "./build/showcase"
     },
     {
         name: "oklch",
-        sources: ["./demos/oklch.c3", "./vi.c3"],
+        sources: ["./demos/oklch.c3", "./vic3-src/vi.c3"],
         out: "./build/oklch"
     },
     {
         name: "ball",
-        sources: ["./demos/ball.c3", "./vi.c3"],
+        sources: ["./demos/ball.c3", "./vic3-src/vi.c3"],
         out: "./build/ball"
     },
     {
         name: "cursors",
-        sources: ["./demos/cursors.c3", "./vi.c3"],
+        sources: ["./demos/cursors.c3", "./vic3-src/vi.c3"],
         out: "./build/cursors"
     },
     {
         name: "input-keys",
-        sources: ["./demos/input-keys.c3", "./vi.c3"],
+        sources: ["./demos/input-keys.c3", "./vic3-src/vi.c3"],
         out: "./build/input-keys"
     },
     {
         name: "blen-dmodes",
-        sources: ["./demos/blend-modes.c3", "./vi.c3"],
+        sources: ["./demos/blend-modes.c3", "./vic3-src/vi.c3"],
         out: "./build/blend-modes"
     },
     {
         name: "retro",
-        sources: ["./demos/retro.c3", "./vi.c3"],
+        sources: ["./demos/retro.c3", "./vic3-src/vi.c3"],
         out: "./build/retro"
     }
 ]

@@ -113,3 +113,16 @@ blockquote.warning {
 	--c3-from: var(--red / 100%);
 	--c3-to: var(--red / 100%);
 }
+
+.button,
+::file-selector-button {
+  inline-size: fit-content;
+  touch-action: manipulation;
+  user-select: none;
+}
+* {
+  &:focus-visible {
+    outline: 2px solid var(--red / 100%);
+    outline-offset: 2px;
+  }
+}

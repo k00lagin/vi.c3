@@ -1,4 +1,4 @@
-import Vic3 from './vic3.mjs';
+import Vic3 from '../vic3-src/vic3.mjs';
 
 const demos = [
 	{ name: 'showcase', wasm: 'build/showcase.wasm', canvas: document.querySelector('.showcase-demo') },
