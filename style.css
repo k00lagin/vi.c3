@@ -61,11 +61,14 @@ a:active {
 
 canvas {
 	border: 0.5px solid rgb(var(--white) / 50%);
+	touch-action: manipulation;
+	user-select: none;
 }
 
 canvas:focus {
 	border: 1px solid rgb(var(--red) / 100%);
 	outline: 2px solid rgb(var(--red) / 100%);
+	outline-offset: 2px;
 }
 
 blockquote.warning {
