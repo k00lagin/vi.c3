@@ -1,4 +1,4 @@
-// Based on Alexey Kutepov's https://github.com/tsoding/zozlib.js/blob/main/examples/tsoding_ball.c
+// Based on Alexey Kutepov's ball (https://github.com/tsoding/zozlib.js/blob/main/examples/tsoding_ball.c)
 import vi;
 
 const WIDTH = 800;
