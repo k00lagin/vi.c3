@@ -3,7 +3,7 @@
 > [!WARNING]
 > This Library is a work In Progress! Anything can change at any moment without any notice! Use this library at your own risk!
 
-![showcase](frontend-src/assets/showcase.png?raw=true)
+![showcase](https://github.com/k00lagin/vi.c3/blob/main/assets/showcase.png?raw=true)
 
 Vic3 is a work-in-progress library for building apps and games with WebAssembly and C3.
 
