@@ -2,6 +2,7 @@ module vi;
 
 import std::math;
 import std::core::string;
+import std::compression::qoi;
 
 def Color = char[<4>];
 def Vector2 = float[<2>];
@@ -118,6 +119,16 @@ fn Canvas *newCanvas(uint width, uint height) {
     canvas.height = height;
     for (uint i = 0; i < width * height; ++i) {
         canvas.pixels[i] = Color { 0, 0, 0, 0 };
+    }
+    return canvas;
+}
+
+fn Canvas *newCanvasFromImageData(char[] data) {
+    QOIDesc desc;
+    char[] pixels = qoi::decode(data, &desc) ?? (char[]){};
+    Canvas *canvas = newCanvas(desc.width, desc.height);
+    for (uint i = 0; i < desc.width * desc.height; ++i) {
+        canvas.putPixel(i % desc.width, i / desc.width, Color { pixels[i*4], pixels[i*4+1], pixels[i*4+2], pixels[i*4+3] });
     }
     return canvas;
 }
@@ -305,6 +316,14 @@ fn void Canvas.mask(&mask, Canvas *target, int maskX, int maskY, int width, int 
     }
 }
 
+fn void Canvas.populateWithImageData(Canvas *canvas, char[] data) {
+    QOIDesc desc;
+    char[] pixels = qoi::decode(data, &desc) ?? (char[]){};
+    for (int i = 0; i < desc.width * desc.height; ++i) {
+        canvas.putPixel(i % desc.width, i / desc.width, Color{ pixels[i * 4], pixels[i * 4 + 1], pixels[i * 4 + 2], pixels[i * 4 + 3] });
+    }
+}
+
 fn void clearBackground(Color color) { Canvas.clearBackground(currentCanvas, color); }
 fn void putPixel(int x, int y, Color color) { Canvas.putPixel(currentCanvas, x, y, color); }
 fn void putPixelV(IntVector2 position, Color color) { Canvas.putPixelV(currentCanvas, position, color); }
@@ -328,6 +347,7 @@ fn void draw(Canvas *source, int sourceX, int sourceY, int width, int height, in
 fn void mask(Canvas *mask, int maskX, int maskY, int width, int height, int targetX, int targetY) {
     Canvas.mask(mask, currentCanvas, maskX, maskY, width, height, targetX, targetY);
 }
+fn void populateWithImageData(char[] data) { Canvas.populateWithImageData(currentCanvas, data); }
 
 fn bool checkCollisionPointRec(IntVector2 point, IntVector4 rect) {
     if (point.x >= rect.x && point.x <= rect.x + rect.b && point.y >= rect.y && point.y <= rect.y + rect.a) {
