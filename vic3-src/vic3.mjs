@@ -53,8 +53,10 @@ class Vic3 {
 		this.canvasWidth = undefined;
 		this.canvasHeight = undefined;
 		this.focused = false;
-		this.prevPressedKeyState = new Set();
-		this.currentPressedKeyState = new Set();
+		this.prevPressedKeyCodes = new Set();
+		this.prevPressedKeys = new Set();
+		this.currentPressedKeyCodes = new Set();
+		this.currentPressedKeys = new Set();
 		this.currentMouseWheelMoveState = 0;
 		this.currentMousePosition = { x: 0, y: 0 };
 		this.prevMouseButtonState = new Set();
@@ -95,13 +97,13 @@ class Vic3 {
 		const keyDown = (e) => {
 			if (this.focused) {
 				e.preventDefault();
-				this.currentPressedKeyState.add(e.keyCode);
+				this.currentPressedKeyCodes.add(e.code);
 			}
 		};
 		const keyUp = (e) => {
 			if (this.focused) {
 				e.preventDefault();
-				this.currentPressedKeyState.delete(e.keyCode);
+				this.currentPressedKeyCodes.delete(e.code);
 			}
 		};
 		const wheelMove = (e) => {
@@ -194,8 +196,11 @@ class Vic3 {
 		// TEMP
 		return min + Math.floor(Math.random() * (max - min + 1));
 	}
-	isKeyDown(keyCode) {
-		return this.currentPressedKeyState.has(keyCode);
+	isKeyDown(codePtr) {
+		const buffer = this.wasm.instance.exports.memory.buffer;
+		const code = cstr_by_ptr(buffer, codePtr);
+		return this.currentPressedKeyCodes.has(code);
+	}
 	}
 	drawText(canvasPtr, textPtr, posX, posY, fontSize, colorPtr) {
 		// TODO: implement font atlas, and C3's drawText

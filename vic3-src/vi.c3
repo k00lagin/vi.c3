@@ -286,7 +286,7 @@ fn void Canvas.drawLine(&canvas, int x1, int y1, int x2, int y2, Color color) @e
 }
 
 fn void Canvas.drawText(&canvas, char *text, int posX, int posY, int fontSize, Color color) {
-    vi::js::drawText(canvas,text, posX, posY, fontSize, &color);
+    vi::js::drawText(canvas, text, posX, posY, fontSize, &color);
 }
 
 fn void Canvas.draw(&canvas, Canvas *target, int sourceX, int sourceY, int width, int height, int targetX, int targetY) {
@@ -399,57 +399,11 @@ extern fn void quit() @extern("shouldQuit") @wasm;
 
 module vi::kb;
 
-const BACKSPACE = 8;
-const TAB = 9;
-const ENTER = 13;
-const SHIFT = 16;
-const CTRL = 17;
-const ALT = 18;
-const ESCAPE = 27;
-const SPACE = 32;
-const ARROW_LEFT = 37;
-const ARROW_UP = 38;
-const ARROW_RIGHT = 39;
-const ARROW_DOWN = 40;
-const DELETE = 46;
-const F1 = 112;
-const F2 = 113;
-const F3 = 114;
-const F4 = 115;
-const F5 = 116;
-const F6 = 117;
-const F7 = 118;
-const F8 = 119;
-const F9 = 120;
-const F10 = 121;
-const F11 = 122;
-const F12 = 123;
-const F13 = 124;
-const F14 = 125;
-const F15 = 126;
-const F16 = 127;
-const F17 = 128;
-const F18 = 129;
-const F19 = 130;
-const F20 = 131;
-const F21 = 132;
-const F22 = 133;
-const F23 = 134;
-const F24 = 135;
-const F25 = 136;
-const F26 = 137;
-const F27 = 138;
-const F28 = 139;
-const F29 = 140;
-const F30 = 141;
-const F31 = 142;
-const F32 = 143;
-
-extern fn bool isKeyDown(char key) @extern("isKeyDown") @wasm;
+extern fn bool isKeyDown(char *code) @extern("isKeyDown") @wasm;
 
 module vi::mouse;
 
-extern fn void getPosition(IntVector2 *resultPtr) @extern("Mouse_getPosition") @wasm;
+extern fn void getPosition(IntVector2 *result) @extern("Mouse_getPosition") @wasm;
 extern fn int getX() @extern("Mouse_getX") @wasm;
 extern fn int getY() @extern("Mouse_getY") @wasm;
 extern fn bool isDown(char button) @extern("Mouse_isDown") @wasm; // 0-4 https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/button
