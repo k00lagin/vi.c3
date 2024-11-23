@@ -205,16 +205,18 @@ class Vic3 {
 	drawText(canvasPtr, textPtr, posX, posY, fontSize, colorPtr) {
 		// TODO: implement font atlas, and C3's drawText
 		const buffer = this.wasm.instance.exports.memory.buffer;
+		const width = new Uint32Array(buffer, canvasPtr, 1)[0];
+		const height = new Uint32Array(buffer, canvasPtr + 4, 1)[0];
 		const pixelsPtr = canvasPtr + 8;
 		const tempCanvas = document.createElement('canvas');
-		tempCanvas.width = this.canvasWidth;
-		tempCanvas.height = this.canvasHeight;
+		tempCanvas.width = width;
+		tempCanvas.height = height;
 		const tempCtx = tempCanvas.getContext('2d');
 		tempCtx.putImageData(
 			new ImageData(
-				new Uint8ClampedArray(buffer, pixelsPtr, this.canvasWidth * this.canvasHeight * 4),
-				this.canvasWidth,
-				this.canvasHeight
+				new Uint8ClampedArray(buffer, pixelsPtr, width * height * 4),
+				width,
+				height
 			),
 			0,
 			0
@@ -227,12 +229,12 @@ class Vic3 {
 		tempCtx.fillText(text, posX, posY);
 
 		const pixels = new Uint8ClampedArray(
-			tempCtx.getImageData(0, 0, this.canvasWidth, this.canvasHeight).data
+			tempCtx.getImageData(0, 0, width, height).data
 		);
 		const target = new Uint8ClampedArray(
 			buffer,
 			pixelsPtr,
-			this.canvasWidth * this.canvasHeight * 4
+			width * height * 4
 		);
 		target.set(pixels);
 	}
