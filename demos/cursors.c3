@@ -90,8 +90,8 @@ fn void draw(float dt) @export("draw") @wasm {
                 vi::drawRectangle(rect.x, rect.y, RECT_SIZE, RECT_SIZE, Color { 200, 69, 69, 255 });
             }
             if (!labelsDrawn) {
-                labels.drawText(Cursors.values[row * COLS + col].description, rect.x + 1, (int)(rect.y + (RECT_SIZE / 9 * 5.75 + 1)), 17, Color { 18, 18, 18, 255 });
-                labels.drawText(Cursors.values[row * COLS + col].description, rect.x + 2, (int)(rect.y + (RECT_SIZE / 9 * 5.75)), 17, Color { 255, 255, 255, 255 });
+                labels.drawText(Cursors.values[row * COLS + col].description, rect.x + 1, (int)(rect.y + (RECT_SIZE / 9 * 5.75 + 1)), Color { 18, 18, 18, 255 });
+                labels.drawText(Cursors.values[row * COLS + col].description, rect.x + 2, (int)(rect.y + (RECT_SIZE / 9 * 5.75)), Color { 255, 255, 255, 255 });
             }
         }
     }
@@ -109,5 +109,6 @@ fn void draw(float dt) @export("draw") @wasm {
 
 fn void main() @export("main") @wasm {
     vi::initWindow(WIDTH, HEIGHT);
+    vi::js::setFont("17px VT323");
     labels = vi::newCanvas(WIDTH, HEIGHT);
 }

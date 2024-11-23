@@ -39,8 +39,9 @@ fn void draw(float dt) @export("draw") @wasm {
 fn void main() @export("main") @wasm {
 	vi::initWindow(WIDTH, HEIGHT);
 	labels = vi::newCanvas(WIDTH, HEIGHT);
-	labels.drawText("Alpha", 9, 31, 16, Color { 0, 0, 0, 255 });
-	labels.drawText("Alpha", 10, 30, 16, Color { 255, 255, 255, 255 });
-	labels.drawText("Replace", WIDTH / 2 + 9, 31, 16, Color { 0, 0, 0, 255 });
-	labels.drawText("Replace", WIDTH / 2 + 10, 30, 16, Color { 255, 255, 255, 255 });
+	vi::js::setFont("16px VT323");
+	labels.drawText("Alpha", 9, 31, Color { 0, 0, 0, 255 });
+	labels.drawText("Alpha", 10, 30, Color { 255, 255, 255, 255 });
+	labels.drawText("Replace", WIDTH / 2 + 9, 31, Color { 0, 0, 0, 255 });
+	labels.drawText("Replace", WIDTH / 2 + 10, 30, Color { 255, 255, 255, 255 });
 }

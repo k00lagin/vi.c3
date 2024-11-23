@@ -14,9 +14,10 @@ fn void draw() @export("draw") @wasm {
 
     vi::clearBackground(Color { 8, 8, 18, 255 });
     vi::drawCircle((int)ball_position.x, (int)ball_position.y, 50, Color { 236, 72, 153, 255 });
-    vi::drawText("move the ball with arrow keys", 10, 30, 20, Color { 230, 200, 200, 255 });
+    vi::drawText("move the ball with arrow keys", 10, 30, Color { 230, 200, 200, 255 });
 }
 
 fn void main() @export("main") @wasm {
 	vi::initWindow(WIDTH, HEIGHT);
+    vi::js::setFont("20px VT323");
 }

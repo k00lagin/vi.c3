@@ -201,8 +201,14 @@ class Vic3 {
 		const code = cstr_by_ptr(buffer, codePtr);
 		return this.currentPressedKeyCodes.has(code);
 	}
+	measureText(textPtr, resultPtr) {
+		const buffer = this.wasm.instance.exports.memory.buffer;
+		const text = cstr_by_ptr(buffer, textPtr);
+		const metrics = this.ctx.measureText(text);
+		const result = new Uint32Array(buffer, resultPtr, 2);
+		result.set(new Uint32Array([Math.ceil(metrics.width), Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)], 2));
 	}
-	drawText(canvasPtr, textPtr, posX, posY, fontSize, colorPtr) {
+	drawText(canvasPtr, textPtr, posX, posY, colorPtr) {
 		// TODO: implement font atlas, and C3's drawText
 		const buffer = this.wasm.instance.exports.memory.buffer;
 		const width = new Uint32Array(buffer, canvasPtr, 1)[0];
@@ -225,7 +231,6 @@ class Vic3 {
 		const color = getColorFromMemory(buffer, colorPtr);
 
 		tempCtx.fillStyle = color;
-		tempCtx.font = `${fontSize}px VT323`;
 		tempCtx.fillText(text, posX, posY);
 
 		const pixels = new Uint8ClampedArray(
@@ -237,6 +242,11 @@ class Vic3 {
 			width * height * 4
 		);
 		target.set(pixels);
+	}
+	setFont(fontPtr) {
+		const buffer = this.wasm.instance.exports.memory.buffer;
+		const font = cstr_by_ptr(buffer, fontPtr);
+		this.ctx.font = font;
 	}
 	async setClipboardText(textPtr) {
 		const buffer = this.wasm.instance.exports.memory.buffer;

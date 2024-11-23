@@ -285,8 +285,8 @@ fn void Canvas.drawLine(&canvas, int x1, int y1, int x2, int y2, Color color) @e
     }
 }
 
-fn void Canvas.drawText(&canvas, char *text, int posX, int posY, int fontSize, Color color) {
-    vi::js::drawText(canvas, text, posX, posY, fontSize, &color);
+fn void Canvas.drawText(&canvas, char *text, int posX, int posY, Color color) {
+    vi::js::drawText(canvas, text, posX, posY, &color);
 }
 
 fn void Canvas.draw(&canvas, Canvas *target, int sourceX, int sourceY, int width, int height, int targetX, int targetY) {
@@ -334,7 +334,7 @@ fn void drawRectangleLines(int posX, int posY, int width, int height, Color colo
 fn void drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, Color color) { Canvas.drawTriangle(currentCanvas, x1, y1, x2, y2, x3, y3, color); }
 fn void drawTriangleLines(int x1, int y1, int x2, int y2, int x3, int y3, Color color) { Canvas.drawTriangleLines(currentCanvas, x1, y1, x2, y2, x3, y3, color); }
 fn void drawLine(int x1, int y1, int x2, int y2, Color color) { Canvas.drawLine(currentCanvas, x1, y1, x2, y2, color); }
-fn void drawText(char *text, int posX, int posY, int fontSize, Color color) { Canvas.drawText(currentCanvas, text, posX, posY, fontSize, color); }
+fn void drawText(char *text, int posX, int posY, Color color) { Canvas.drawText(currentCanvas, text, posX, posY, color); }
 
 fn void setCanvas(Canvas *canvas) { currentCanvas = canvas; }
 fn void setScissor(IntVector4 area) { drawArea = area; } // The idea stolen from Love2d https://love2d.org/wiki/love.graphics.setScissor
@@ -418,4 +418,7 @@ extern fn int getRandomValue(int min, int max) @extern("getRandomValue") @wasm;
 // You can avoid it by drawing everything once at the start of the programm to a separate canvas
 // and then just draw this canvas to your actual render target
 // TODO: maybe I should use freetype?
-extern fn void drawText(Canvas *canvas, char *text, int posX, int posY, int fontSize, Color *color) @extern("drawText") @wasm;
+extern fn void drawText(Canvas *canvas, char *text, int posX, int posY, Color *color) @extern("drawText") @wasm;
+extern fn void measureText(char *text, IntVector2 *result) @extern("measureText") @wasm;
+extern fn void setFont(char *font) @extern("setFont") @wasm;
+
