@@ -411,7 +411,7 @@ extern fn void setCursor(char *cursor) @extern("Mouse_setCursor") @wasm;
 
 module vi::js;
 
-extern fn float getRandomValue(int min, int max) @extern("getRandomValue") @wasm;
+extern fn int getRandomValue(int min, int max) @extern("getRandomValue") @wasm;
 
 // Here'll be temporary *Borrow-functions*. They borrow given canvas to js, draw stuff, and rewrite pixels in raw memory.
 // **BEWARE** The memory passing back and forth in a single frame will heavily influence performance
