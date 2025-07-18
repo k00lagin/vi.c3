@@ -11,9 +11,9 @@ Canvas* emoji;
 
 const float GRAVITY = 2000.0;
 
-Vector2 ball_position = Vector2 { 0, 0 };
-const Vector2 BALL_MAX_VELOCITY = Vector2 { 1050, 1050 };
-Vector2 ball_velocity = Vector2 { 200, 200 };
+Vector2 ball_position = (Vector2) { 0, 0 };
+const Vector2 BALL_MAX_VELOCITY = (Vector2) { 1050, 1050 };
+Vector2 ball_velocity = (Vector2) { 200, 200 };
 float hitTime = 0;
 
 fn void hit() {
@@ -31,7 +31,7 @@ fn void draw(float dt) @export("draw") @wasm {
 		}
 		hitTime = hitTime - dt;
 	}
-	vi::clearBackground(Color { 8, 8, 18, 255 });
+	vi::clearBackground((Color) { 8, 8, 18, 255 });
 	ball_velocity.y += GRAVITY * dt;
 	if (ball_velocity.y > BALL_MAX_VELOCITY.y) {
 		ball_velocity.y = BALL_MAX_VELOCITY.y;
@@ -56,7 +56,7 @@ fn void draw(float dt) @export("draw") @wasm {
 }
 
 fn void main() @export("main") @wasm {
-  ball_position = Vector2 { WIDTH / 2 - (float)emoji.width / 2, HEIGHT / 2 - (float)emoji.height / 2 };
+  ball_position = (Vector2) { WIDTH / 2 - (float)emoji.width / 2, HEIGHT / 2 - (float)emoji.height / 2 };
 	emoji = vi::newCanvasFromImageData(EMOJI_DATA);
 
 	vi::initWindow(WIDTH, HEIGHT);

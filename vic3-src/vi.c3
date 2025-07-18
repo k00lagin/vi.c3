@@ -4,11 +4,11 @@ import std::math;
 import std::core::string;
 import std::compression::qoi;
 
-def Color = char[<4>];
-def Vector2 = float[<2>];
-def IntVector2 = int[<2>];
-def Vector4 = float[<4>];
-def IntVector4 = int[<4>];
+typedef Color = char[<4>];
+typedef Vector2 = float[<2>];
+typedef IntVector2 = int[<2>];
+typedef Vector4 = float[<4>];
+typedef IntVector4 = int[<4>];
 
 extern fn float fpow(float x, float exp) @extern("fpow") @wasm;
 
@@ -42,7 +42,7 @@ struct Canvas {
 }
 Canvas *defaultCanvas;
 Canvas *currentCanvas;
-IntVector4 drawArea = IntVector4 { 0, 0, 0, 0 }; // sets by setScissor, restrict draw area, if zeros - whole canvas
+IntVector4 drawArea = (IntVector4) { 0, 0, 0, 0 }; // sets by setScissor, restrict draw area, if zeros - whole canvas
 
 extern fn void connectCanvas(Canvas *canvas) @extern("connectCanvas") @wasm;
 fn Canvas *initWindow(uint width, uint height) {
@@ -61,7 +61,7 @@ fn Color hsvToRGB(float hue, float saturation, float value, float alpha) { // h:
         color[i] = (value - value * saturation * k[i]) * 255.0f;
     }
 
-    return Color { (char)color[0], (char)color[1], (char)color[2], (char)(alpha * 255) };
+    return (Color) { (char)color[0], (char)color[1], (char)color[2], (char)(alpha * 255) };
 }
 
 struct Oklch {
@@ -118,18 +118,20 @@ fn Canvas *newCanvas(uint width, uint height) {
     canvas.width = width;
     canvas.height = height;
     for (uint i = 0; i < width * height; ++i) {
-        canvas.pixels[i] = Color { 0, 0, 0, 0 };
+        canvas.pixels[i] = (Color) { 0, 0, 0, 0 };
     }
     return canvas;
 }
 
 fn Canvas *newCanvasFromImageData(char[] data) {
+    Allocator allocator = std::core::mem::allocator::temp();
     QOIDesc desc;
-    char[] pixels = qoi::decode(data, &desc) ?? (char[]){};
+    char[] pixels = qoi::decode(allocator, data, &desc) ?? (char[]){};
     Canvas *canvas = newCanvas(desc.width, desc.height);
     for (uint i = 0; i < desc.width * desc.height; ++i) {
-        canvas.putPixel(i % desc.width, i / desc.width, Color { pixels[i*4], pixels[i*4+1], pixels[i*4+2], pixels[i*4+3] });
+        canvas.putPixel(i % desc.width, i / desc.width, (Color) { pixels[i*4], pixels[i*4+1], pixels[i*4+2], pixels[i*4+3] });
     }
+    allocator::free(allocator, pixels);
     return canvas;
 }
 
@@ -153,7 +155,7 @@ fn void Canvas.putPixel(&canvas, int posX, int posY, Color color) {
     }
     if (currentBlendMode == BlendMode.ALPHA && color.a < 255) {
         Color pixel = canvas.pixels[posY * canvas.width + posX];
-        canvas.pixels[posY * canvas.width + posX] = Color {
+        canvas.pixels[posY * canvas.width + posX] = (Color) {
             (char)((color.r * color.a + pixel.r * (255 - color.a)) / 255),
             (char)((color.g * color.a + pixel.g * (255 - color.a)) / 255),
             (char)((color.b * color.a + pixel.b * (255 - color.a)) / 255),
@@ -317,11 +319,13 @@ fn void Canvas.mask(&mask, Canvas *target, int maskX, int maskY, int width, int 
 }
 
 fn void Canvas.populateWithImageData(Canvas *canvas, char[] data) {
+    Allocator allocator = std::core::mem::allocator::temp();
     QOIDesc desc;
-    char[] pixels = qoi::decode(data, &desc) ?? (char[]){};
+    char[] pixels = qoi::decode(allocator, data, &desc) ?? (char[]){};
     for (int i = 0; i < desc.width * desc.height; ++i) {
-        canvas.putPixel(i % desc.width, i / desc.width, Color{ pixels[i * 4], pixels[i * 4 + 1], pixels[i * 4 + 2], pixels[i * 4 + 3] });
+        canvas.putPixel(i % desc.width, i / desc.width, (Color) { pixels[i * 4], pixels[i * 4 + 1], pixels[i * 4 + 2], pixels[i * 4 + 3] });
     }
+    allocator::free(allocator, pixels);
 }
 
 fn void clearBackground(Color color) { Canvas.clearBackground(currentCanvas, color); }
@@ -338,7 +342,7 @@ fn void drawText(char *text, int posX, int posY, Color color) { Canvas.drawText(
 
 fn void setCanvas(Canvas *canvas) { currentCanvas = canvas; }
 fn void setScissor(IntVector4 area) { drawArea = area; } // The idea stolen from Love2d https://love2d.org/wiki/love.graphics.setScissor
-fn void unsetScissor() { drawArea = IntVector4 { 0, 0, 0, 0 }; }
+fn void unsetScissor() { drawArea = (IntVector4) { 0, 0, 0, 0 }; }
 fn void setBlendMode(BlendMode blendMode) { currentBlendMode = blendMode; }
 
 fn void draw(Canvas *source, int sourceX, int sourceY, int width, int height, int targetX, int targetY) {
