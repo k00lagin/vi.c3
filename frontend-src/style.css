@@ -4,6 +4,8 @@ body {
 	color: rgb(var(--white) / 100%);
 	font-family: 'VT323', monospace;
 	height: 100%;
+	text-shadow: 0 0 0.1em currentColor;
+	font-size: 1.1rem;
 
 	--white: 230 200 200;
 	--black: 8 8 18;
@@ -18,9 +20,9 @@ body {
 }
 
 aside {
-	width: 18rem;
 	flex-shrink: 0;
 	border-right: 0.5px solid rgb(var(--white) / 50%);
+	padding-right: 2rem;
 }
 
 aside nav ul {
@@ -52,9 +54,11 @@ a {
 	color: var(--white);
 	font-weight: 600;
 }
+
 a:hover {
 	color: color-mix(in srgb, rgb(var(--white) / 100%) 50%, rgb(var(--red) / 100%));
 }
+
 a:active {
 	color: rgb(var(--red) / 100%);
 }
@@ -116,13 +120,14 @@ blockquote.warning {
 
 .button,
 ::file-selector-button {
-  inline-size: fit-content;
-  touch-action: manipulation;
-  user-select: none;
+	inline-size: fit-content;
+	touch-action: manipulation;
+	user-select: none;
 }
+
 * {
-  &:focus-visible {
-    outline: 2px solid var(--red / 100%);
-    outline-offset: 2px;
-  }
+	&:focus-visible {
+		outline: 2px solid var(--red / 100%);
+		outline-offset: 2px;
+	}
 }
