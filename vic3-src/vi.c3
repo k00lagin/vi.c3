@@ -124,14 +124,16 @@ fn Canvas *newCanvas(uint width, uint height) {
 }
 
 fn Canvas *newCanvasFromImageData(char[] data) {
-    Allocator allocator = std::core::mem::allocator::temp();
-    QOIDesc desc;
-    char[] pixels = qoi::decode(allocator, data, &desc) ?? (char[]){};
-    Canvas *canvas = newCanvas(desc.width, desc.height);
-    for (uint i = 0; i < desc.width * desc.height; ++i) {
-        canvas.putPixel(i % desc.width, i / desc.width, (Color) { pixels[i*4], pixels[i*4+1], pixels[i*4+2], pixels[i*4+3] });
-    }
-    allocator::free(allocator, pixels);
+    Allocator temp = tmem;
+    Canvas *canvas = null;
+    @pool() {
+        QOIDesc desc;
+        char[] pixels = qoi::decode(temp, data, &desc) ?? (char[]){};
+        canvas = newCanvas(desc.width, desc.height);
+        for (uint i = 0; i < desc.width * desc.height; ++i) {
+            canvas.putPixel(i % desc.width, i / desc.width, (Color) { pixels[i*4], pixels[i*4+1], pixels[i*4+2], pixels[i*4+3] });
+        }
+    };
     return canvas;
 }
 
@@ -319,13 +321,14 @@ fn void Canvas.mask(&mask, Canvas *target, int maskX, int maskY, int width, int 
 }
 
 fn void Canvas.populateWithImageData(Canvas *canvas, char[] data) {
-    Allocator allocator = std::core::mem::allocator::temp();
-    QOIDesc desc;
-    char[] pixels = qoi::decode(allocator, data, &desc) ?? (char[]){};
-    for (int i = 0; i < desc.width * desc.height; ++i) {
-        canvas.putPixel(i % desc.width, i / desc.width, (Color) { pixels[i * 4], pixels[i * 4 + 1], pixels[i * 4 + 2], pixels[i * 4 + 3] });
-    }
-    allocator::free(allocator, pixels);
+    Allocator temp = tmem;
+    @pool() {
+        QOIDesc desc;
+        char[] pixels = qoi::decode(temp, data, &desc) ?? (char[]){};
+        for (int i = 0; i < desc.width * desc.height; ++i) {
+            canvas.putPixel(i % desc.width, i / desc.width, (Color) { pixels[i * 4], pixels[i * 4 + 1], pixels[i * 4 + 2], pixels[i * 4 + 3] });
+        }
+    };
 }
 
 fn void clearBackground(Color color) { Canvas.clearBackground(currentCanvas, color); }
