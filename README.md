@@ -1,7 +1,7 @@
 # Vic3
 
 > [!WARNING]
-> This Library is a work In Progress! Anything can change at any moment without any notice! Use this library at your own risk!
+> This library is a work in progress. Features and APIs may change at any time without notice. Use this library at your own risk.
 
 ![showcase](https://github.com/k00lagin/vi.c3/blob/main/assets/showcase.png?raw=true)
 
@@ -10,4 +10,4 @@ Vic3 is a work-in-progress library for building apps and games with WebAssembly 
 It's taking inspiration from (alphabetically): [Love 2d](https://love2d.org/), [olive.c](https://github.com/tsoding/olive.c), [Raylib](https://www.raylib.com/), and [zozlib.js](https://github.com/tsoding/zozlib.js).
 
 > [!WARNING]
-> We are intentionally rendering on HTML 2D Canvas without employing any hardware acceleration to see how much we can push the boundaries of the software rendering implemented in C3 and WebAssembly running in Browser. So the renderer may run unexpectedly slow on some machines and browsers, but we are working it.
+> We intentionally render on an HTML 2D Canvas without hardware acceleration to explore how far we can push the limits of software rendering implemented in C3 and WebAssembly running in the browser. The renderer may perform slowly on some machines or browsers, but we are improving it.
