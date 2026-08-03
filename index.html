@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
@@ -17,13 +17,13 @@
 						</a>
 					</li>
 					<li><a href="#demos">Demos</a></li>
+					<li><a href="#retro-demo">Retro</a></li>
 					<li><a href="#fonts-demo">Fonts</a></li>
 					<li><a href="#oklch-demo">OKLCH</a></li>
 					<li><a href="#ball-demo">Bouncer</a></li>
 					<li><a href="#cursors-demo">Mouse Interactions</a></li>
 					<li><a href="#input-keys-demo">Input Keys</a></li>
 					<li><a href="#blend-modes-demo">Blend Modes</a></li>
-					<li><a href="#retro-demo">Retro</a></li>
 				</ul>
 			</nav>
 		</aside>
@@ -32,8 +32,8 @@
 
 			<blockquote class="warning">
 				<p>
-					This library is a work in progress. Features and APIs may change at any time without notice.
-					Use this library at your own risk.
+					This library is a work in progress. Features and APIs may change at any time without
+					notice. Use this library at your own risk.
 				</p>
 			</blockquote>
 
@@ -56,15 +56,18 @@
 
 			<blockquote class="warning">
 				<p>
-					We intentionally render on an HTML 2D Canvas without hardware acceleration to
-					explore how far we can push the limits of software rendering implemented in
-					<a class="c3-link" href="https://c3-lang.org/">C3</a> and WebAssembly running
-					in the browser. The renderer may perform slowly on some machines or browsers,
-					but we are improving it.
+					We intentionally render on an HTML 2D Canvas without hardware acceleration to explore how
+					far we can push the limits of software rendering implemented in
+					<a class="c3-link" href="https://c3-lang.org/">C3</a> and WebAssembly running in the
+					browser. The renderer may perform slowly on some machines or browsers, but we are
+					improving it.
 				</p>
 			</blockquote>
 
 			<h2 id="demos">Demos</h2>
+			<h3 id="retro-demo">Retro animation WIP</h3>
+			<canvas class="retro-demo" tabindex="-1"></canvas>
+
 			<h3 id="fonts-demo">Fonts</h3>
 			<canvas class="fonts-demo" tabindex="-1"></canvas>
 
@@ -83,9 +86,6 @@
 
 			<h3 id="blend-modes-demo">Blend Modes</h3>
 			<canvas class="blend-modes-demo" tabindex="-1"></canvas>
-
-			<h3 id="retro-demo">Retro animation WIP</h3>
-			<canvas class="retro-demo" tabindex="-1"></canvas>
 		</main>
 
 		<script type="module" src="vic3-src/vic3.mjs"></script>
