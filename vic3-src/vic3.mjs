@@ -1,3 +1,8 @@
+import buildFontAtlas from './buildFontAtlas.mjs';
+
+const DEFAULT_FONT_CODEPOINTS = createDefaultFontCodepoints();
+const MAX_CONCURRENT_FONT_ATLAS_BUILDS = 2;
+
 function makeEnvironment(env) {
 	return new Proxy(env, {
 		get(_target, prop, _receiver) {
@@ -43,6 +48,10 @@ const observer = new IntersectionObserver(handleIntersection);
 
 class Vic3 {
 	#reset() {
+		for (const build of this.fontAtlasBuilds?.values() ?? []) {
+			build.controller.abort();
+		}
+		this.fontAtlasBuilds = new Map();
 		this.wasm = undefined;
 		this.ctx = undefined;
 		this.dt = undefined;
@@ -201,52 +210,113 @@ class Vic3 {
 		const code = cstr_by_ptr(buffer, codePtr);
 		return this.currentPressedKeyCodes.has(code);
 	}
-	measureText(textPtr, resultPtr) {
+	fontCharacterSetsEqual(leftPtr, rightPtr) {
 		const buffer = this.wasm.instance.exports.memory.buffer;
-		const text = cstr_by_ptr(buffer, textPtr);
-		const metrics = this.ctx.measureText(text);
-		const result = new Uint32Array(buffer, resultPtr, 2);
-		result.set(new Uint32Array([Math.ceil(metrics.width), Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)], 2));
+		const left = createCodepointsFromString(cstr_by_ptr(buffer, leftPtr));
+		const right = createCodepointsFromString(cstr_by_ptr(buffer, rightPtr));
+		return left.length === right.length && left.every((codepoint, index) => codepoint === right[index]);
 	}
-	drawText(canvasPtr, textPtr, posX, posY, colorPtr) {
-		// TODO: implement font atlas, and C3's drawText
-		const buffer = this.wasm.instance.exports.memory.buffer;
-		const width = new Uint32Array(buffer, canvasPtr, 1)[0];
-		const height = new Uint32Array(buffer, canvasPtr + 4, 1)[0];
-		const pixelsPtr = canvasPtr + 8;
-		const tempCanvas = document.createElement('canvas');
-		tempCanvas.width = width;
-		tempCanvas.height = height;
-		const tempCtx = tempCanvas.getContext('2d');
-		tempCtx.putImageData(
-			new ImageData(
-				new Uint8ClampedArray(buffer, pixelsPtr, width * height * 4),
-				width,
-				height
-			),
-			0,
-			0
-		);
-		const text = cstr_by_ptr(buffer, textPtr);
-		const color = getColorFromMemory(buffer, colorPtr);
+	requestFontAtlas(fontFamilyPtr, fontSize, charactersPtr, atlasPtr) {
+		const instance = this.wasm.instance;
+		const buffer = instance.exports.memory.buffer;
+		const fontFamily = cstr_by_ptr(buffer, fontFamilyPtr);
+		const codepoints = charactersPtr === 0
+			? DEFAULT_FONT_CODEPOINTS
+			: createCodepointsFromString(cstr_by_ptr(buffer, charactersPtr));
 
-		tempCtx.fillStyle = color;
-		tempCtx.fillText(text, posX, posY);
+		while (this.fontAtlasBuilds.size >= MAX_CONCURRENT_FONT_ATLAS_BUILDS) {
+			const [oldestAtlasPtr, oldestBuild] = this.fontAtlasBuilds.entries().next().value;
+			oldestBuild.controller.abort();
+			this.fontAtlasBuilds.delete(oldestAtlasPtr);
+			oldestBuild.failureReported = true;
+			if (this.wasm?.instance === oldestBuild.instance) {
+				oldestBuild.instance.exports.fontAtlasFailed(oldestAtlasPtr);
+			}
+		}
 
-		const pixels = new Uint8ClampedArray(
-			tempCtx.getImageData(0, 0, width, height).data
-		);
-		const target = new Uint8ClampedArray(
-			buffer,
-			pixelsPtr,
-			width * height * 4
-		);
-		target.set(pixels);
+		const build = { controller: new AbortController(), instance, failureReported: false };
+		this.fontAtlasBuilds.set(atlasPtr, build);
+		void this.#loadFontAtlas(instance, fontFamily, fontSize, codepoints, atlasPtr, build)
+			.finally(() => {
+				if (this.fontAtlasBuilds.get(atlasPtr) === build) this.fontAtlasBuilds.delete(atlasPtr);
+			});
 	}
-	setFont(fontPtr) {
-		const buffer = this.wasm.instance.exports.memory.buffer;
-		const font = cstr_by_ptr(buffer, fontPtr);
-		this.ctx.font = font;
+	async #loadFontAtlas(instance, fontFamily, fontSize, codepoints, atlasPtr, build) {
+		let atlas;
+		try {
+			atlas = await buildFontAtlas({
+				fontFamily,
+				fontSize,
+				codepoints,
+				padding: 1,
+				useOffscreen: true,
+				includeKerning: true,
+				signal: build.controller.signal
+			});
+			if (this.wasm?.instance !== instance) return;
+			const exports = instance.exports;
+			exports.fontAtlasPrepare(
+				atlasPtr,
+				atlas.lineHeight,
+				atlas.emAscent,
+				atlas.emDescent,
+				atlas.glyphs.length,
+				atlas.kernings.length
+			);
+
+			const pixelsPtr = exports.fontAtlasPrepareBitmap(atlasPtr, atlas.width, atlas.height) >>> 0;
+			const pixels = new Uint8ClampedArray(
+				exports.memory.buffer,
+				pixelsPtr,
+				atlas.width * atlas.height * 4
+			);
+			pixels.set(atlas.pixels);
+
+			for (let i = 0; i < atlas.glyphs.length; i++) {
+				const glyph = atlas.glyphs[i];
+				exports.fontAtlasSetGlyph(
+					atlasPtr,
+					i,
+					glyph.codepoint,
+					glyph.x,
+					glyph.y,
+					glyph.width,
+					glyph.height,
+					glyph.xOffset,
+					glyph.yOffset,
+					glyph.xAdvance
+				);
+			}
+			for (let i = 0; i < atlas.kernings.length; i++) {
+				const kerning = atlas.kernings[i];
+				exports.fontAtlasSetKerning(
+					atlasPtr,
+					i,
+					kerning.left,
+					kerning.right,
+					kerning.adjustment
+				);
+			}
+		} catch (error) {
+			if (!build.failureReported && this.wasm?.instance === instance) {
+				build.failureReported = true;
+				instance.exports.fontAtlasFailed(atlasPtr);
+			}
+			if (error.name !== 'AbortError') console.error(`Could not build font atlas for "${fontFamily}"`, error);
+			return;
+		}
+
+		// Publishing may let C3 evict this atlas. Never send atlasPtr to a failure
+		// callback after this point.
+		instance.exports.fontAtlasReady(atlasPtr);
+		try {
+			console.log(
+				`Font atlas ready: "${fontFamily}" ${atlas.width}x${atlas.height}, ` +
+				`${atlas.glyphs.length} glyphs, ${atlas.kernings.length} kerning pairs`
+			);
+		} catch {
+			// Host pages may replace console methods; publishing already succeeded.
+		}
 	}
 	async setClipboardText(textPtr) {
 		const buffer = this.wasm.instance.exports.memory.buffer;
@@ -298,17 +368,24 @@ function cstr_by_ptr(mem_buffer, ptr) {
 	return new TextDecoder().decode(bytes);
 }
 
-function colorHexUnpacked(r, g, b, a) {
-	r = r.toString(16).padStart(2, '0');
-	g = g.toString(16).padStart(2, '0');
-	b = b.toString(16).padStart(2, '0');
-	a = a.toString(16).padStart(2, '0');
-	return '#' + r + g + b + a;
+function createDefaultFontCodepoints() {
+	const codepoints = [];
+	const addRange = (start, end) => {
+		for (let codepoint = start; codepoint <= end; codepoint++) codepoints.push(codepoint);
+	};
+
+	addRange(0x0020, 0x007e); // Basic Latin
+	addRange(0x00a0, 0x017f); // Latin-1 Supplement and Latin Extended-A
+	addRange(0x0400, 0x04ff); // Cyrillic
+	addRange(0x2000, 0x206f); // General Punctuation
+	codepoints.push(0xfffd); // Replacement Character
+	return codepoints;
 }
 
-function getColorFromMemory(buffer, color_ptr) {
-	const [r, g, b, a] = new Uint8Array(buffer, color_ptr, 4);
-	return colorHexUnpacked(r, g, b, a);
+function createCodepointsFromString(characters) {
+	const codepoints = new Set(Array.from(characters, character => character.codePointAt(0)));
+	codepoints.add(0xfffd);
+	return [...codepoints].sort((a, b) => a - b);
 }
 
 export default Vic3;

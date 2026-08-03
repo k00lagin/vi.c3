@@ -19,5 +19,5 @@ fn void draw() @export("draw") @wasm {
 
 fn void main() @export("main") @wasm {
 	vi::initWindow(WIDTH, HEIGHT);
-    vi::js::setFont("20px VT323");
+    vi::setFontChars("VT323", 20, "move the ball with arrow keys");
 }

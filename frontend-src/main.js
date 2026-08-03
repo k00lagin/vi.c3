@@ -2,6 +2,7 @@ import Vic3 from '../vic3-src/vic3.mjs';
 
 const demos = [
 	{ name: 'showcase', wasm: 'build/showcase.wasm', canvas: document.querySelector('.showcase-demo') },
+	{ name: 'fonts', wasm: 'build/fonts.wasm', canvas: document.querySelector('.fonts-demo') },
 	{ name: 'oklch', wasm: 'build/oklch.wasm', canvas: document.querySelector('.oklch-demo') },
 	{ name: 'ball', wasm: 'build/ball.wasm', canvas: document.querySelector('.ball-demo') },
 	{ name: 'cursors', wasm: 'build/cursors.wasm', canvas: document.querySelector('.cursors-demo') },

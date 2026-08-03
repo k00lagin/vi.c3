@@ -6,8 +6,17 @@ const RECT_SIZE = 40;
 
 Canvas *labels;
 IntVector2 mouseCoords;
+bool labelsDrawn = false;
 
 fn void draw(float dt) @export("draw") @wasm {
+		if (!labelsDrawn && vi::isFontReady()) {
+			labels.drawText("Alpha", 9, 31, (Color) { 0, 0, 0, 255 });
+			labels.drawText("Alpha", 10, 30, (Color) { 255, 255, 255, 255 });
+			labels.drawText("Replace", WIDTH / 2 + 9, 31, (Color) { 0, 0, 0, 255 });
+			labels.drawText("Replace", WIDTH / 2 + 10, 30, (Color) { 255, 255, 255, 255 });
+			labelsDrawn = true;
+		}
+
 		for (usz x = 0; x <= WIDTH / RECT_SIZE; ++x) {
 			for (usz y = 0; y <= HEIGHT / RECT_SIZE; ++y) {
 				if ((x + y) % 2) {
@@ -39,9 +48,5 @@ fn void draw(float dt) @export("draw") @wasm {
 fn void main() @export("main") @wasm {
 	vi::initWindow(WIDTH, HEIGHT);
 	labels = vi::newCanvas(WIDTH, HEIGHT);
-	vi::js::setFont("16px VT323");
-	labels.drawText("Alpha", 9, 31, (Color) { 0, 0, 0, 255 });
-	labels.drawText("Alpha", 10, 30, (Color) { 255, 255, 255, 255 });
-	labels.drawText("Replace", WIDTH / 2 + 9, 31, (Color) { 0, 0, 0, 255 });
-	labels.drawText("Replace", WIDTH / 2 + 10, 30, (Color) { 255, 255, 255, 255 });
+	vi::setFontChars("VT323", 16, "AlphaReplace");
 }

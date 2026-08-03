@@ -35,6 +35,11 @@ const demos = [
         name: "retro",
         sources: ["./demos/retro.c3", "./vic3-src/vi.c3"],
         out: "./build/retro"
+    },
+    {
+        name: "fonts",
+        sources: ["./demos/fonts.c3", "./vic3-src/vi.c3"],
+        out: "./build/fonts"
     }
 ]
 

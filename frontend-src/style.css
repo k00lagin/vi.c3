@@ -4,6 +4,13 @@
 }
 
 @font-face {
+	font-family: 'VT323';
+	src: url('fonts/vt323_google_fonts/VT323-Regular.ttf') format('truetype');
+	font-style: normal;
+	font-weight: 400;
+}
+
+@font-face {
 	font-family: 'unscii-8';
 	src: url('fonts/unscii_by_viznut/unscii-8.woff') format('woff');
 }
@@ -37,7 +44,6 @@
     font-family: "BoldPixels";
     src: url("fonts/BoldPixels_by_yukipixels/BoldPixels.eot"); /* IE9 */
     src: url("fonts/BoldPixels_by_yukipixels/BoldPixels.eot?#iefix") format("embedded-opentype"), /* IE6-IE8 */
-    url("fonts/BoldPixels_by_yukipixels/BoldPixels.woff2") format("woff2"), /* chrome、firefox、opera、Safari, Android, iOS */
     url("fonts/BoldPixels_by_yukipixels/BoldPixels.woff") format("woff"), /* chrome、firefox */
     url("fonts/BoldPixels_by_yukipixels/BoldPixels.ttf") format("truetype"), /* chrome、firefox、opera、Safari, Android, iOS 4.2+ */
     url("fonts/BoldPixels_by_yukipixels/BoldPixels.svg#uxfonteditor") format("svg"); /* iOS 4.1- */

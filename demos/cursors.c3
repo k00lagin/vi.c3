@@ -59,6 +59,7 @@ bool labelsDrawn = false;
 
 fn void draw(float dt) @export("draw") @wasm {
     vi::clearBackground((Color) { 8, 8, 18, 255 });
+    bool shouldDrawLabels = !labelsDrawn && vi::isFontReady();
 
     vi::mouse::getPosition(&mouseCoords);
     mouseDownState = vi::mouse::isDown(0);
@@ -89,7 +90,7 @@ fn void draw(float dt) @export("draw") @wasm {
             } else {
                 vi::drawRectangle(rect.x, rect.y, RECT_SIZE, RECT_SIZE, (Color) { 200, 69, 69, 255 });
             }
-            if (!labelsDrawn) {
+            if (shouldDrawLabels) {
                 labels.drawText(Cursors.from_ordinal(row * COLS + col).description, rect.x + 1, (int)(rect.y + (RECT_SIZE / 9 * 5.75 + 1)), (Color) { 18, 18, 18, 255 });
                 labels.drawText(Cursors.from_ordinal(row * COLS + col).description, rect.x + 2, (int)(rect.y + (RECT_SIZE / 9 * 5.75)), (Color) { 255, 255, 255, 255 });
             }
@@ -100,15 +101,16 @@ fn void draw(float dt) @export("draw") @wasm {
         currentCursor = 0;
         vi::mouse::setCursor(Cursors.DEFAULT.description);
     }
-    if (!labelsDrawn) {
+    if (shouldDrawLabels) {
         labelsDrawn = true;
-    } else {
+    }
+    if (labelsDrawn) {
         vi::draw(labels, 0, 0, WIDTH, HEIGHT, 0, 0);
     }
 }
 
 fn void main() @export("main") @wasm {
     vi::initWindow(WIDTH, HEIGHT);
-    vi::js::setFont("17px VT323");
+    vi::setFontChars("VT323", 17, "abcdefghijklmnopqrstuvwxyz-");
     labels = vi::newCanvas(WIDTH, HEIGHT);
 }

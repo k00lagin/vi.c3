@@ -44,6 +44,47 @@ Canvas *defaultCanvas;
 Canvas *currentCanvas;
 IntVector4 drawArea = (IntVector4) { 0, 0, 0, 0 }; // sets by setScissor, restrict draw area, if zeros - whole canvas
 
+struct Glyph {
+	uint codepoint;
+	uint x;
+	uint y;
+	uint width;
+	uint height;
+	float xOffset;
+	float yOffset;
+	float xAdvance;
+}
+struct KerningPair {
+	uint left;
+	uint right;
+	float adjustment;
+}
+enum FontAtlasState : uint {
+	LOADING,
+	READY,
+	FAILED
+}
+struct FontAtlas {
+	Canvas *bitmap;
+    char* family;
+    char* characters;
+    uint fontSize;
+    float lineHeight;
+    float emAscent;
+    float emDescent;
+    Glyph* glyphs;
+    uint glyphCount;
+    KerningPair* kernings;
+    uint kerningCount;
+    FontAtlasState state;
+    ulong lastUsed;
+    FontAtlas* next;
+}
+FontAtlas *fontAtlases = null;
+FontAtlas *currentFont = null;
+ulong fontAtlasAccessCounter = 0;
+const uint FONT_ATLAS_CACHE_LIMIT = 8;
+
 extern fn void connectCanvas(Canvas *canvas) @extern("connectCanvas") @wasm;
 fn Canvas *initWindow(uint width, uint height) {
     defaultCanvas = newCanvas(width, height);
@@ -289,8 +330,140 @@ fn void Canvas.drawLine(&canvas, int x1, int y1, int x2, int y2, Color color) @e
     }
 }
 
+fn Glyph* findGlyph(FontAtlas *atlas, uint codepoint) {
+    if (atlas == null || atlas.glyphs == null) return null;
+    int low = 0;
+    int high = (int)atlas.glyphCount - 1;
+    while (low <= high) {
+        int middle = low + (high - low) / 2;
+        uint candidate = atlas.glyphs[middle].codepoint;
+        if (candidate == codepoint) return &atlas.glyphs[middle];
+        if (candidate < codepoint) {
+            low = middle + 1;
+        } else {
+            high = middle - 1;
+        }
+    }
+    return null;
+}
+
+fn float findKerning(FontAtlas *atlas, uint left, uint right) {
+    if (atlas == null || atlas.kernings == null) return 0.0f;
+    int low = 0;
+    int high = (int)atlas.kerningCount - 1;
+    while (low <= high) {
+        int middle = low + (high - low) / 2;
+        KerningPair *candidate = &atlas.kernings[middle];
+        if (candidate.left == left && candidate.right == right) return candidate.adjustment;
+        if (candidate.left < left || (candidate.left == left && candidate.right < right)) {
+            low = middle + 1;
+        } else {
+            high = middle - 1;
+        }
+    }
+    return 0.0f;
+}
+
 fn void Canvas.drawText(&canvas, char *text, int posX, int posY, Color color) {
-    vi::js::drawText(canvas, text, posX, posY, &color);
+    if (currentFont == null || currentFont.state != FontAtlasState.READY || currentFont.bitmap == null) {
+        return;
+    }
+
+    float x = (float)posX;
+    float y = (float)posY;
+    uint i = 0;
+    uint previousCodepoint = 0;
+
+    while (text[i] != 0) {
+        // Invalid UTF-8 consumes one byte and renders as the replacement glyph.
+        uint first = (uint)text[i] & 0xFF;
+        uint codepoint = first;
+        int bytes = 1;
+
+        if (first >= 0xC2 && first <= 0xDF && text[i + 1] != 0) {
+            uint second = (uint)text[i + 1] & 0xFF;
+            if ((second & 0xC0) == 0x80) {
+                bytes = 2;
+                codepoint = (first & 0x1F) << 6 | (second & 0x3F);
+            } else {
+                codepoint = 0xFFFD;
+            }
+        } else if (first >= 0xE0 && first <= 0xEF && text[i + 1] != 0 && text[i + 2] != 0) {
+            uint second = (uint)text[i + 1] & 0xFF;
+            uint third = (uint)text[i + 2] & 0xFF;
+            bool validSecond = (second & 0xC0) == 0x80;
+            bool validThird = (third & 0xC0) == 0x80;
+            bool validRange = (first != 0xE0 || second >= 0xA0) && (first != 0xED || second <= 0x9F);
+            if (validSecond && validThird && validRange) {
+                bytes = 3;
+                codepoint = (first & 0x0F) << 12 | (second & 0x3F) << 6 | (third & 0x3F);
+            } else {
+                codepoint = 0xFFFD;
+            }
+        } else if (first >= 0xF0 && first <= 0xF4 && text[i + 1] != 0 && text[i + 2] != 0 && text[i + 3] != 0) {
+            uint second = (uint)text[i + 1] & 0xFF;
+            uint third = (uint)text[i + 2] & 0xFF;
+            uint fourth = (uint)text[i + 3] & 0xFF;
+            bool validContinuation = (second & 0xC0) == 0x80 && (third & 0xC0) == 0x80 && (fourth & 0xC0) == 0x80;
+            bool validRange = (first != 0xF0 || second >= 0x90) && (first != 0xF4 || second <= 0x8F);
+            if (validContinuation && validRange) {
+                bytes = 4;
+                codepoint = (first & 0x07) << 18 | (second & 0x3F) << 12 | (third & 0x3F) << 6 | (fourth & 0x3F);
+            } else {
+                codepoint = 0xFFFD;
+            }
+        } else if (first >= 0x80) {
+            codepoint = 0xFFFD;
+        }
+
+        // Handle newline
+        if (codepoint == '\n') {
+            x = (float)posX;
+            y += currentFont.lineHeight;
+            previousCodepoint = 0;
+            i += bytes;
+            continue;
+        }
+
+        Glyph *glyph = findGlyph(currentFont, codepoint);
+        if (glyph == null) glyph = findGlyph(currentFont, 0xFFFD);
+        if (glyph != null && glyph.width > 0 && glyph.height > 0) {
+            if (previousCodepoint != 0) x += findKerning(currentFont, previousCodepoint, glyph.codepoint);
+            // Draw glyph from atlas to canvas
+            int glyphX = (int)(x + glyph.xOffset);
+            int glyphY = (int)(y + glyph.yOffset);
+
+            // Copy glyph pixels from atlas to canvas with color tinting
+            for (uint gy = 0; gy < glyph.height; ++gy) {
+                for (uint gx = 0; gx < glyph.width; ++gx) {
+                    uint atlasX = glyph.x + gx;
+                    uint atlasY = glyph.y + gy;
+                    if (atlasX < currentFont.bitmap.width && atlasY < currentFont.bitmap.height) {
+                        Color atlasPixel = currentFont.bitmap.pixels[atlasY * currentFont.bitmap.width + atlasX];
+                        if (atlasPixel.a > 0) {
+                            // Keep straight RGB; putPixel applies alpha exactly once.
+                            Color tintedColor = (Color) {
+                                color.r,
+                                color.g,
+                                color.b,
+                                (char)((color.a * atlasPixel.a) / 255)
+                            };
+                            canvas.putPixel(glyphX + (int)gx, glyphY + (int)gy, tintedColor);
+                        }
+                    }
+                }
+            }
+
+            x += glyph.xAdvance;
+            previousCodepoint = glyph.codepoint;
+        } else {
+            // Unknown glyph - advance by approximate width
+            x += (float)currentFont.fontSize / 2.0f;
+            previousCodepoint = 0;
+        }
+
+        i += bytes;
+    }
 }
 
 fn void Canvas.draw(&canvas, Canvas *target, int sourceX, int sourceY, int width, int height, int targetX, int targetY) {
@@ -404,6 +577,169 @@ extern fn void openURL(char *text) @extern("openURL") @wasm;
 
 extern fn void quit() @extern("shouldQuit") @wasm;
 
+extern fn void requestFontAtlas(char *fontFamily, uint fontSize, char *characters, FontAtlas *atlas) @extern("requestFontAtlas") @wasm;
+extern fn bool fontCharacterSetsEqual(char *left, char *right) @extern("fontCharacterSetsEqual") @wasm;
+
+fn bool stringEquals(char *a, char *b) {
+    uint i = 0;
+    while (a[i] != 0 && b[i] != 0) {
+        if (a[i] != b[i]) return false;
+        i++;
+    }
+    return a[i] == b[i];
+}
+
+fn bool optionalCharacterSetsEqual(char *a, char *b) {
+    if (a == null || b == null) return a == b;
+    return fontCharacterSetsEqual(a, b);
+}
+
+fn char* copyString(char *source) {
+    uint length = 0;
+    while (source[length] != 0) length++;
+    char *copy = mem::calloc((ulong)length + 1);
+    for (uint i = 0; i < length; ++i) copy[i] = source[i];
+    return copy;
+}
+
+fn void clearFontAtlasData(FontAtlas *atlas) {
+    if (atlas.bitmap != null) mem::free(atlas.bitmap);
+    if (atlas.glyphs != null) mem::free(atlas.glyphs);
+    if (atlas.kernings != null) mem::free(atlas.kernings);
+    atlas.bitmap = null;
+    atlas.glyphs = null;
+    atlas.kernings = null;
+    atlas.glyphCount = 0;
+    atlas.kerningCount = 0;
+}
+
+fn void evictFontAtlases() {
+    uint count = 0;
+    FontAtlas *atlas = fontAtlases;
+    while (atlas != null) {
+        count++;
+        atlas = atlas.next;
+    }
+
+    while (count > FONT_ATLAS_CACHE_LIMIT) {
+        FontAtlas *oldest = null;
+        FontAtlas *oldestPrevious = null;
+        FontAtlas *previous = null;
+        atlas = fontAtlases;
+        while (atlas != null) {
+            if (atlas != currentFont && atlas.state != FontAtlasState.LOADING && (oldest == null || atlas.lastUsed < oldest.lastUsed)) {
+                oldest = atlas;
+                oldestPrevious = previous;
+            }
+            previous = atlas;
+            atlas = atlas.next;
+        }
+        if (oldest == null) return;
+
+        if (oldestPrevious == null) {
+            fontAtlases = oldest.next;
+        } else {
+            oldestPrevious.next = oldest.next;
+        }
+        clearFontAtlasData(oldest);
+        mem::free(oldest.family);
+        if (oldest.characters != null) mem::free(oldest.characters);
+        mem::free(oldest);
+        count--;
+    }
+}
+
+fn void setFontWithCharacters(char *fontFamily, uint fontSize, char *characters) {
+    FontAtlas *atlas = fontAtlases;
+    while (atlas != null) {
+        if (stringEquals(atlas.family, fontFamily) && atlas.fontSize == fontSize && optionalCharacterSetsEqual(atlas.characters, characters)) {
+            currentFont = atlas;
+            atlas.lastUsed = ++fontAtlasAccessCounter;
+            if (atlas.state == FontAtlasState.FAILED) {
+                atlas.state = FontAtlasState.LOADING;
+                requestFontAtlas(atlas.family, atlas.fontSize, atlas.characters, atlas);
+            }
+            return;
+        }
+        atlas = atlas.next;
+    }
+
+    atlas = mem::calloc(FontAtlas.sizeof);
+    atlas.family = copyString(fontFamily);
+    atlas.characters = characters == null ? null : copyString(characters);
+    atlas.fontSize = fontSize;
+    atlas.state = FontAtlasState.LOADING;
+    atlas.lastUsed = ++fontAtlasAccessCounter;
+    atlas.next = fontAtlases;
+    fontAtlases = atlas;
+    currentFont = atlas;
+    requestFontAtlas(atlas.family, atlas.fontSize, atlas.characters, atlas);
+    evictFontAtlases();
+}
+
+fn void setFont(char *fontFamily, uint fontSize) {
+    setFontWithCharacters(fontFamily, fontSize, null);
+}
+
+fn void setFontChars(char *fontFamily, uint fontSize, char *characters) {
+    setFontWithCharacters(fontFamily, fontSize, characters);
+}
+
+fn bool isFontReady() {
+    return currentFont != null && currentFont.state == FontAtlasState.READY && currentFont.bitmap != null;
+}
+
+fn char* fontAtlasPrepareBitmap(FontAtlas *atlas, uint width, uint height) @export("fontAtlasPrepareBitmap") @wasm {
+    if (atlas == null || width == 0 || height == 0) return null;
+    atlas.bitmap = newCanvas(width, height);
+    return (char*)&atlas.bitmap.pixels[0];
+}
+
+fn void fontAtlasPrepare(FontAtlas *atlas, float lineHeight, float emAscent, float emDescent, uint glyphCount, uint kerningCount) @export("fontAtlasPrepare") @wasm {
+    if (atlas == null) return;
+    clearFontAtlasData(atlas);
+    atlas.lineHeight = lineHeight;
+    atlas.emAscent = emAscent;
+    atlas.emDescent = emDescent;
+    atlas.glyphCount = glyphCount;
+    atlas.kerningCount = kerningCount;
+    atlas.glyphs = glyphCount > 0 ? mem::calloc((ulong)glyphCount * Glyph.sizeof) : null;
+    atlas.kernings = kerningCount > 0 ? mem::calloc((ulong)kerningCount * KerningPair.sizeof) : null;
+}
+
+fn void fontAtlasSetGlyph(FontAtlas *atlas, uint index, uint codepoint, uint x, uint y, uint width, uint height, float xOffset, float yOffset, float xAdvance) @export("fontAtlasSetGlyph") @wasm {
+    if (atlas == null || index >= atlas.glyphCount) return;
+    atlas.glyphs[index] = (Glyph) {
+        codepoint,
+        x,
+        y,
+        width,
+        height,
+        xOffset,
+        yOffset,
+        xAdvance
+    };
+}
+
+fn void fontAtlasSetKerning(FontAtlas *atlas, uint index, uint left, uint right, float adjustment) @export("fontAtlasSetKerning") @wasm {
+    if (atlas == null || index >= atlas.kerningCount) return;
+    atlas.kernings[index] = (KerningPair) { left, right, adjustment };
+}
+
+fn void fontAtlasReady(FontAtlas *atlas) @export("fontAtlasReady") @wasm {
+    if (atlas != null) {
+        atlas.state = FontAtlasState.READY;
+        evictFontAtlases();
+    }
+}
+
+fn void fontAtlasFailed(FontAtlas *atlas) @export("fontAtlasFailed") @wasm {
+    if (atlas != null) {
+        atlas.state = FontAtlasState.FAILED;
+        evictFontAtlases();
+    }
+}
+
 module vi::kb;
 
 extern fn bool isKeyDown(char *code) @extern("isKeyDown") @wasm;
@@ -419,13 +755,3 @@ extern fn void setCursor(char *cursor) @extern("Mouse_setCursor") @wasm;
 module vi::js;
 
 extern fn int getRandomValue(int min, int max) @extern("getRandomValue") @wasm;
-
-// Here'll be temporary *Borrow-functions*. They borrow given canvas to js, draw stuff, and rewrite pixels in raw memory.
-// **BEWARE** The memory passing back and forth in a single frame will heavily influence performance
-// You can avoid it by drawing everything once at the start of the programm to a separate canvas
-// and then just draw this canvas to your actual render target
-// TODO: maybe I should use freetype?
-extern fn void drawText(Canvas *canvas, char *text, int posX, int posY, Color *color) @extern("drawText") @wasm;
-extern fn void measureText(char *text, IntVector2 *result) @extern("measureText") @wasm;
-extern fn void setFont(char *font) @extern("setFont") @wasm;
-
