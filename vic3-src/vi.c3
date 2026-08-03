@@ -29,9 +29,15 @@ fn void swap(int* x, int* y) {
     *y = t;
 }
 
+fn int roundToInt(float value) {
+    return value >= 0 ? (int)(value + 0.5f) : -(int)(0.5f - value);
+}
+
 enum BlendMode : uint {
     ALPHA,
-    REPLACE
+    REPLACE,
+    ADD,
+    MULTIPLY
 }
 BlendMode currentBlendMode = BlendMode.ALPHA;
 
@@ -196,17 +202,81 @@ fn void Canvas.putPixel(&canvas, int posX, int posY, Color color) {
             return;
         }
     }
-    if (currentBlendMode == BlendMode.ALPHA && color.a < 255) {
-        Color pixel = canvas.pixels[posY * canvas.width + posX];
-        canvas.pixels[posY * canvas.width + posX] = (Color) {
-            (char)((color.r * color.a + pixel.r * (255 - color.a)) / 255),
-            (char)((color.g * color.a + pixel.g * (255 - color.a)) / 255),
-            (char)((color.b * color.a + pixel.b * (255 - color.a)) / 255),
-            (char)((color.a * 255 + pixel.a * (255 - color.a)) / 255)
-        };
-    } else {
+    if (currentBlendMode == BlendMode.REPLACE) {
         canvas.pixels[posY * canvas.width + posX] = color;
+        return;
     }
+
+    int sourceAlpha = (int)color.a;
+    if (sourceAlpha == 0 && currentBlendMode != BlendMode.MULTIPLY) {
+        return;
+    }
+    if (currentBlendMode == BlendMode.ALPHA && sourceAlpha >= 255) {
+        canvas.pixels[posY * canvas.width + posX] = color;
+        return;
+    }
+
+    Color pixel = canvas.pixels[posY * canvas.width + posX];
+    switch (currentBlendMode) {
+        case ALPHA:
+            canvas.pixels[posY * canvas.width + posX] = (Color) {
+                (char)((color.r * color.a + pixel.r * (255 - color.a)) / 255),
+                (char)((color.g * color.a + pixel.g * (255 - color.a)) / 255),
+                (char)((color.b * color.a + pixel.b * (255 - color.a)) / 255),
+                (char)((color.a * 255 + pixel.a * (255 - color.a)) / 255)
+            };
+        case ADD:
+            // Light accumulates: overlapping glows saturate toward white.
+            int addedRed = (int)pixel.r + (int)color.r * sourceAlpha / 255;
+            int addedGreen = (int)pixel.g + (int)color.g * sourceAlpha / 255;
+            int addedBlue = (int)pixel.b + (int)color.b * sourceAlpha / 255;
+            if (addedRed > 255) addedRed = 255;
+            if (addedGreen > 255) addedGreen = 255;
+            if (addedBlue > 255) addedBlue = 255;
+            canvas.pixels[posY * canvas.width + posX] = (Color) {
+                (char)addedRed,
+                (char)addedGreen,
+                (char)addedBlue,
+                (char)(sourceAlpha > (int)pixel.a ? sourceAlpha : (int)pixel.a)
+            };
+        case MULTIPLY:
+            // Darkens the target; alpha fades the effect toward no-op.
+            int multipliedRed = (int)pixel.r * (int)color.r / 255;
+            int multipliedGreen = (int)pixel.g * (int)color.g / 255;
+            int multipliedBlue = (int)pixel.b * (int)color.b / 255;
+            canvas.pixels[posY * canvas.width + posX] = (Color) {
+                (char)(((int)pixel.r * (255 - sourceAlpha) + multipliedRed * sourceAlpha) / 255),
+                (char)(((int)pixel.g * (255 - sourceAlpha) + multipliedGreen * sourceAlpha) / 255),
+                (char)(((int)pixel.b * (255 - sourceAlpha) + multipliedBlue * sourceAlpha) / 255),
+                pixel.a
+            };
+        default:
+            canvas.pixels[posY * canvas.width + posX] = color;
+    }
+}
+
+fn Color lerpColor(Color from, Color to, float amount) {
+    if (amount < 0) amount = 0;
+    if (amount > 1) amount = 1;
+    return (Color) {
+        (char)((float)from.r + ((float)to.r - (float)from.r) * amount),
+        (char)((float)from.g + ((float)to.g - (float)from.g) * amount),
+        (char)((float)from.b + ((float)to.b - (float)from.b) * amount),
+        (char)((float)from.a + ((float)to.a - (float)from.a) * amount)
+    };
+}
+
+// Interpolates in OKLCH, so the midpoints stay perceptually even instead of
+// dipping through the muddy colors an sRGB blend would produce.
+fn Color oklchMix(Oklch from, Oklch to, float amount) {
+    if (amount < 0) amount = 0;
+    if (amount > 1) amount = 1;
+    return oklchToRGB((Oklch) {
+        from.l + (to.l - from.l) * amount,
+        from.c + (to.c - from.c) * amount,
+        from.h + (to.h - from.h) * amount,
+        from.a + (to.a - from.a) * amount
+    });
 }
 
 // Draw a pixel (Vector version)
@@ -248,12 +318,54 @@ fn void Canvas.drawCircle(&canvas, int centerX, int centerY, float radius, Color
     }
 }
 
+// Draw a circle filled with a center-to-edge gradient
+fn void Canvas.drawCircleGradient(&canvas, int centerX, int centerY, float radius, Color inner, Color outer) {
+    int wholeRadius = (int)radius;
+    if (wholeRadius <= 0) {
+        return;
+    }
+    for (int y = -wholeRadius; y <= wholeRadius; ++y) {
+        for (int x = -wholeRadius; x <= wholeRadius; ++x) {
+            int distanceSquared = x * x + y * y;
+            if (distanceSquared > wholeRadius * wholeRadius) {
+                continue;
+            }
+            float amount = math::sqrt((float)distanceSquared) / (float)wholeRadius;
+            canvas.putPixel(centerX + x, centerY + y, lerpColor(inner, outer, amount));
+        }
+    }
+}
+
 // Draw a color-filled rectangle
 fn void Canvas.drawRectangle(&canvas, int posX, int posY, int width, int height, Color color) {
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             canvas.putPixel(posX + x, posY + y, color);
         }
+    }
+}
+
+// Draw a rectangle filled with a top-to-bottom gradient
+fn void Canvas.drawRectangleGradientV(&canvas, int posX, int posY, int width, int height, Color top, Color bottom) {
+    for (int y = 0; y < height; ++y) {
+        float amount = height > 1 ? (float)y / (float)(height - 1) : 0.0f;
+        canvas.drawRectangle(posX, posY + y, width, 1, lerpColor(top, bottom, amount));
+    }
+}
+
+// Draw a rectangle filled with a left-to-right gradient
+fn void Canvas.drawRectangleGradientH(&canvas, int posX, int posY, int width, int height, Color left, Color right) {
+    for (int x = 0; x < width; ++x) {
+        float amount = width > 1 ? (float)x / (float)(width - 1) : 0.0f;
+        canvas.drawRectangle(posX + x, posY, 1, height, lerpColor(left, right, amount));
+    }
+}
+
+// Draw a rectangle filled with a top-to-bottom gradient interpolated in OKLCH
+fn void Canvas.drawRectangleGradientVOklch(&canvas, int posX, int posY, int width, int height, Oklch top, Oklch bottom) {
+    for (int y = 0; y < height; ++y) {
+        float amount = height > 1 ? (float)y / (float)(height - 1) : 0.0f;
+        canvas.drawRectangle(posX, posY + y, width, 1, oklchMix(top, bottom, amount));
     }
 }
 
@@ -328,6 +440,58 @@ fn void Canvas.drawLine(&canvas, int x1, int y1, int x2, int y2, Color color) @e
             canvas.putPixel(x, y, color);
         }
     }
+}
+
+// Draw a line of the given thickness. Spans are stepped along the major axis
+// and stretched by length/major so the perpendicular width stays constant.
+fn void Canvas.drawLineEx(&canvas, int x1, int y1, int x2, int y2, float thickness, Color color) {
+    if (thickness <= 1.0f) {
+        canvas.drawLine(x1, y1, x2, y2, color);
+        return;
+    }
+    if (x1 == x2 && y1 == y2) {
+        canvas.drawCircle(x1, y1, thickness / 2.0f, color);
+        return;
+    }
+
+    bool alongX = math::abs(x2 - x1) > math::abs(y2 - y1);
+    if (alongX ? x1 > x2 : y1 > y2) {
+        swap(&x1, &x2);
+        swap(&y1, &y2);
+    }
+
+    float dx = (float)(x2 - x1);
+    float dy = (float)(y2 - y1);
+    float length = math::sqrt(dx * dx + dy * dy);
+    float half = thickness / 2.0f;
+
+    if (alongX) {
+        float extent = half * length / (float)math::abs(x2 - x1);
+        for (int x = x1; x <= x2; ++x) {
+            float center = (float)y1 + dy * (float)(x - x1) / dx;
+            int from = roundToInt(center - extent);
+            int to = roundToInt(center + extent);
+            for (int y = from; y <= to; ++y) {
+                canvas.putPixel(x, y, color);
+            }
+        }
+    } else {
+        float extent = half * length / (float)math::abs(y2 - y1);
+        for (int y = y1; y <= y2; ++y) {
+            float center = (float)x1 + dx * (float)(y - y1) / dy;
+            int from = roundToInt(center - extent);
+            int to = roundToInt(center + extent);
+            for (int x = from; x <= to; ++x) {
+                canvas.putPixel(x, y, color);
+            }
+        }
+    }
+}
+
+fn void Canvas.drawTriangleLinesEx(&canvas, int x1, int y1, int x2, int y2, int x3, int y3, float thickness, Color color) {
+    canvas.drawLineEx(x1, y1, x2, y2, thickness, color);
+    canvas.drawLineEx(x1, y1, x3, y3, thickness, color);
+    canvas.drawLineEx(x2, y2, x3, y3, thickness, color);
 }
 
 fn Glyph* findGlyph(FontAtlas *atlas, uint codepoint) {
@@ -477,6 +641,43 @@ fn void Canvas.draw(&canvas, Canvas *target, int sourceX, int sourceY, int width
     }
 }
 
+// Draw a source region into an arbitrary destination rectangle, scaling with
+// nearest-neighbor sampling so pixels stay crisp. Rectangles are { x, y, width, height }.
+fn void Canvas.drawEx(&canvas, Canvas *target, IntVector4 source, IntVector4 dest, bool flipX, bool flipY) {
+    int sourceWidth = source[2];
+    int sourceHeight = source[3];
+    int destWidth = dest[2];
+    int destHeight = dest[3];
+    if (sourceWidth <= 0 || sourceHeight <= 0 || destWidth <= 0 || destHeight <= 0) {
+        return;
+    }
+
+    for (int y = 0; y < destHeight; ++y) {
+        int sampleY = y * sourceHeight / destHeight;
+        if (flipY) {
+            sampleY = sourceHeight - 1 - sampleY;
+        }
+        sampleY += source.y;
+        if (sampleY < 0 || sampleY >= canvas.height) {
+            continue;
+        }
+        for (int x = 0; x < destWidth; ++x) {
+            int sampleX = x * sourceWidth / destWidth;
+            if (flipX) {
+                sampleX = sourceWidth - 1 - sampleX;
+            }
+            sampleX += source.x;
+            if (sampleX < 0 || sampleX >= canvas.width) {
+                continue;
+            }
+            Color pixel = canvas.pixels[sampleY * canvas.width + sampleX];
+            if (pixel.a > 0) {
+                target.putPixel(dest.x + x, dest.y + y, pixel);
+            }
+        }
+    }
+}
+
 fn void Canvas.mask(&mask, Canvas *target, int maskX, int maskY, int width, int height, int targetX, int targetY) {
     for (int x = 0; x < math::min(width, mask.width - maskX); ++x) {
         for (int y = 0; y < math::min(height, mask.height - maskY); ++y) {
@@ -508,12 +709,18 @@ fn void clearBackground(Color color) { Canvas.clearBackground(currentCanvas, col
 fn void putPixel(int x, int y, Color color) { Canvas.putPixel(currentCanvas, x, y, color); }
 fn void putPixelV(IntVector2 position, Color color) { Canvas.putPixelV(currentCanvas, position, color); }
 fn void drawCircle(int centerX, int centerY, float radius, Color color) { Canvas.drawCircle(currentCanvas, centerX, centerY, radius, color); }
+fn void drawCircleGradient(int centerX, int centerY, float radius, Color inner, Color outer) { Canvas.drawCircleGradient(currentCanvas, centerX, centerY, radius, inner, outer); }
 fn void drawRectangle(int posX, int posY, int width, int height, Color color) { Canvas.drawRectangle(currentCanvas, posX, posY, width, height, color); }
+fn void drawRectangleGradientV(int posX, int posY, int width, int height, Color top, Color bottom) { Canvas.drawRectangleGradientV(currentCanvas, posX, posY, width, height, top, bottom); }
+fn void drawRectangleGradientH(int posX, int posY, int width, int height, Color left, Color right) { Canvas.drawRectangleGradientH(currentCanvas, posX, posY, width, height, left, right); }
+fn void drawRectangleGradientVOklch(int posX, int posY, int width, int height, Oklch top, Oklch bottom) { Canvas.drawRectangleGradientVOklch(currentCanvas, posX, posY, width, height, top, bottom); }
 fn void drawRectangleV(IntVector2 position, IntVector2 size, Color color) { Canvas.drawRectangleV(currentCanvas, position, size, color); }
 fn void drawRectangleLines(int posX, int posY, int width, int height, Color color) { Canvas.drawRectangleLines(currentCanvas, posX, posY, width, height, color); }
 fn void drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, Color color) { Canvas.drawTriangle(currentCanvas, x1, y1, x2, y2, x3, y3, color); }
 fn void drawTriangleLines(int x1, int y1, int x2, int y2, int x3, int y3, Color color) { Canvas.drawTriangleLines(currentCanvas, x1, y1, x2, y2, x3, y3, color); }
+fn void drawTriangleLinesEx(int x1, int y1, int x2, int y2, int x3, int y3, float thickness, Color color) { Canvas.drawTriangleLinesEx(currentCanvas, x1, y1, x2, y2, x3, y3, thickness, color); }
 fn void drawLine(int x1, int y1, int x2, int y2, Color color) { Canvas.drawLine(currentCanvas, x1, y1, x2, y2, color); }
+fn void drawLineEx(int x1, int y1, int x2, int y2, float thickness, Color color) { Canvas.drawLineEx(currentCanvas, x1, y1, x2, y2, thickness, color); }
 fn void drawText(char *text, int posX, int posY, Color color) { Canvas.drawText(currentCanvas, text, posX, posY, color); }
 
 fn void setCanvas(Canvas *canvas) { currentCanvas = canvas; }
@@ -523,6 +730,9 @@ fn void setBlendMode(BlendMode blendMode) { currentBlendMode = blendMode; }
 
 fn void draw(Canvas *source, int sourceX, int sourceY, int width, int height, int targetX, int targetY) {
     Canvas.draw(source, currentCanvas, sourceX, sourceY, width, height, targetX, targetY);
+}
+fn void drawEx(Canvas *source, IntVector4 sourceRect, IntVector4 destRect, bool flipX, bool flipY) {
+    Canvas.drawEx(source, currentCanvas, sourceRect, destRect, flipX, flipY);
 }
 fn void mask(Canvas *mask, int maskX, int maskY, int width, int height, int targetX, int targetY) {
     Canvas.mask(mask, currentCanvas, maskX, maskY, width, height, targetX, targetY);

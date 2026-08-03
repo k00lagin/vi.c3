@@ -44,19 +44,6 @@ int[STAR_COUNT] starSize;
 float[STAR_COUNT] starPhase;
 float[STAR_COUNT] starSpeed;
 
-fn float lerpf(float a, float b, float t) {
-    return a + (b - a) * t;
-}
-
-fn Color oklchMix(Oklch from, Oklch to, float t) {
-    return vi::oklchToRGB((Oklch) {
-        lerpf(from.l, to.l, t),
-        lerpf(from.c, to.c, t),
-        lerpf(from.h, to.h, t),
-        lerpf(from.a, to.a, t)
-    });
-}
-
 fn void drawStars() {
     for (int i = 0; i < STAR_COUNT; ++i) {
         float twinkle = 0.55f + 0.45f * math::sin(time * starSpeed[i] + starPhase[i]);
@@ -97,17 +84,18 @@ fn void drawSun() {
 
 fn void drawMountain(int x1, int px, int py, int x2) {
     vi::drawTriangle(x1, HORIZON, px, py, x2, HORIZON, (Color) { 16, 10, 30, 255 });
-    vi::drawLine(x1, HORIZON, px, py, (Color) { 160, 70, 150, 220 });
-    vi::drawLine(px, py, x2, HORIZON, (Color) { 160, 70, 150, 220 });
+    vi::drawLineEx(x1, HORIZON, px, py, 2.0f, (Color) { 160, 70, 150, 220 });
+    vi::drawLineEx(px, py, x2, HORIZON, 2.0f, (Color) { 160, 70, 150, 220 });
 }
 
 fn void drawGrid() {
     // Vertical lines fan out from the vanishing point at the center of the horizon.
     for (int j = -7; j <= 7; ++j) {
-        vi::drawLine(CX, HORIZON + 1, CX + j * 170, HEIGHT + 30, (Color) { 236, 72, 153, 150 });
+        vi::drawLineEx(CX, HORIZON + 1, CX + j * 170, HEIGHT + 30, 2.0f, (Color) { 236, 72, 153, 150 });
     }
 
     // Horizontal lines are rows of a ground plane projected as y = horizon + depth / z.
+    // Rows thicken as they approach the viewer, which reads as perspective.
     float frac = gridScroll % GRID_STEP;
     for (int i = 0; i < 26; ++i) {
         float z = ((float)i + 1.0f) * GRID_STEP - frac;
@@ -115,18 +103,16 @@ fn void drawGrid() {
         if (y >= HEIGHT) continue;
         int a = 25 + (y - HORIZON) * 4;
         if (a > 235) a = 235;
-        vi::drawLine(0, y, WIDTH, y, (Color) { 236, 72, 153, (char)a });
-        if (y > 430) {
-            vi::drawLine(0, y + 1, WIDTH, y + 1, (Color) { 236, 72, 153, (char)a });
-        }
+        float thickness = 1.0f + (float)(y - HORIZON) / 90.0f;
+        vi::drawLineEx(0, y, WIDTH, y, thickness, (Color) { 236, 72, 153, (char)a });
     }
 }
 
 fn void drawRoad() {
     vi::drawTriangle(CX - 7, HORIZON + 2, CX + 7, HORIZON + 2, WIDTH / 4 * 3, HEIGHT, (Color) { 7, 5, 16, 255 });
     vi::drawTriangle(CX - 7, HORIZON + 2, WIDTH / 4 * 3, HEIGHT, WIDTH / 4, HEIGHT, (Color) { 7, 5, 16, 255 });
-    vi::drawLine(CX - 7, HORIZON + 2, WIDTH / 4, HEIGHT, (Color) { 236, 72, 153, 255 });
-    vi::drawLine(CX + 7, HORIZON + 2, WIDTH / 4 * 3, HEIGHT, (Color) { 236, 72, 153, 255 });
+    vi::drawLineEx(CX - 7, HORIZON + 2, WIDTH / 4, HEIGHT, 3.0f, (Color) { 236, 72, 153, 255 });
+    vi::drawLineEx(CX + 7, HORIZON + 2, WIDTH / 4 * 3, HEIGHT, 3.0f, (Color) { 236, 72, 153, 255 });
 
     // Center dashes share the grid projection and speed but repeat with their
     // own period; a dash whose near end passes the camera stretches to the
@@ -150,12 +136,16 @@ fn void drawRoad() {
 fn void drawTitle() {
     int x = 298;
     int y = 96;
-    vi::drawText("RETROWAVE", x - 3, y, (Color) { 236, 72, 153, 60 });
-    vi::drawText("RETROWAVE", x + 3, y, (Color) { 236, 72, 153, 60 });
-    vi::drawText("RETROWAVE", x, y - 3, (Color) { 236, 72, 153, 60 });
-    vi::drawText("RETROWAVE", x, y + 3, (Color) { 236, 72, 153, 60 });
-    vi::drawText("RETROWAVE", x - 1, y - 1, (Color) { 236, 72, 153, 140 });
-    vi::drawText("RETROWAVE", x + 1, y + 1, (Color) { 236, 72, 153, 140 });
+    // Additive halo passes stack where they overlap, so the glow runs hot
+    // around the strokes instead of just tinting the sky behind them.
+    vi::setBlendMode(BlendMode.ADD);
+    vi::drawText("RETROWAVE", x - 3, y, (Color) { 236, 72, 153, 55 });
+    vi::drawText("RETROWAVE", x + 3, y, (Color) { 236, 72, 153, 55 });
+    vi::drawText("RETROWAVE", x, y - 3, (Color) { 236, 72, 153, 55 });
+    vi::drawText("RETROWAVE", x, y + 3, (Color) { 236, 72, 153, 55 });
+    vi::drawText("RETROWAVE", x - 1, y - 1, (Color) { 236, 72, 153, 90 });
+    vi::drawText("RETROWAVE", x + 1, y + 1, (Color) { 236, 72, 153, 90 });
+    vi::setBlendMode(BlendMode.ALPHA);
     vi::drawText("RETROWAVE", x, y, (Color) { 255, 236, 250, 255 });
 }
 
@@ -183,7 +173,9 @@ fn void draw(float dt) @export("draw") @wasm {
     }
 
     drawStars();
+    vi::setBlendMode(BlendMode.ADD);
     vi::draw(glow, 0, GLOW_R - SUN_CY, GLOW_SIZE, HORIZON, CX - GLOW_R, 0);
+    vi::setBlendMode(BlendMode.ALPHA);
     drawSun();
 
     drawMountain(-40, 70, 235, 180);
@@ -205,51 +197,34 @@ fn void draw(float dt) @export("draw") @wasm {
 fn void main() @export("main") @wasm {
     screen = vi::initWindow(WIDTH, HEIGHT);
 
+    // The sky is two OKLCH ramps rather than one: the break at y=210 bends the
+    // gradient so the hot band stays low, near the horizon.
     background = vi::newCanvas(WIDTH, HEIGHT);
-    for (int y = 0; y < HORIZON; ++y) {
-        float t = (float)y / (HORIZON - 1);
-        Color c = oklchMix(
-            (Oklch) { 0.13, 0.055, 300.0, 1.0 },
-            (Oklch) { 0.52, 0.20, 345.0, 1.0 },
-            t * t
-        );
-        background.drawRectangle(0, y, WIDTH, 1, c);
-    }
-    for (int y = HORIZON; y < HEIGHT; ++y) {
-        float t = (float)(y - HORIZON) / (HEIGHT - HORIZON - 1);
-        Color c = oklchMix(
-            (Oklch) { 0.24, 0.10, 320.0, 1.0 },
-            (Oklch) { 0.08, 0.04, 310.0, 1.0 },
-            t
-        );
-        background.drawRectangle(0, y, WIDTH, 1, c);
-    }
+    background.drawRectangleGradientVOklch(0, 0, WIDTH, 210,
+        (Oklch) { 0.13, 0.055, 300.0, 1.0 },
+        (Oklch) { 0.32, 0.126, 322.0, 1.0 });
+    background.drawRectangleGradientVOklch(0, 210, WIDTH, HORIZON - 210,
+        (Oklch) { 0.32, 0.126, 322.0, 1.0 },
+        (Oklch) { 0.52, 0.20, 345.0, 1.0 });
+    background.drawRectangleGradientVOklch(0, HORIZON, WIDTH, HEIGHT - HORIZON,
+        (Oklch) { 0.24, 0.10, 320.0, 1.0 },
+        (Oklch) { 0.08, 0.04, 310.0, 1.0 });
 
     sunSource = vi::newCanvas(SUN_SIZE, SUN_SIZE);
-    for (int y = 0; y < SUN_SIZE; ++y) {
-        float t = (float)y / (SUN_SIZE - 1);
-        Color c = oklchMix(
-            (Oklch) { 0.95, 0.16, 100.0, 1.0 },
-            (Oklch) { 0.62, 0.24, 5.0, 1.0 },
-            t
-        );
-        sunSource.drawRectangle(0, y, SUN_SIZE, 1, c);
-    }
+    sunSource.drawRectangleGradientVOklch(0, 0, SUN_SIZE, SUN_SIZE,
+        (Oklch) { 0.95, 0.16, 100.0, 1.0 },
+        (Oklch) { 0.62, 0.24, 5.0, 1.0 });
     sun = vi::newCanvas(SUN_SIZE, SUN_SIZE);
     sunMask = vi::newCanvas(SUN_SIZE, SUN_SIZE);
     circleMask = vi::newCanvas(SUN_SIZE, SUN_SIZE);
     circleMask.drawCircle(SUN_CX, SUN_CY, SUN_R, (Color) { 255, 255, 255, 255 });
 
+    // REPLACE writes the halo's own alpha straight into the canvas; blending it
+    // against transparent black here would darken the color before it is used.
     glow = vi::newCanvas(GLOW_SIZE, GLOW_SIZE);
-    for (int y = 0; y < GLOW_SIZE; ++y) {
-        for (int x = 0; x < GLOW_SIZE; ++x) {
-            int dx = x - GLOW_R;
-            int dy = y - GLOW_R;
-            float f = 1.0f - (float)(dx * dx + dy * dy) / (GLOW_R * GLOW_R);
-            if (f < 0) continue;
-            glow.pixels[y * GLOW_SIZE + x] = (Color) { 255, 110, 190, (char)(f * f * 105) };
-        }
-    }
+    vi::setBlendMode(BlendMode.REPLACE);
+    glow.drawCircleGradient(GLOW_R, GLOW_R, GLOW_R, (Color) { 255, 110, 190, 80 }, (Color) { 255, 110, 190, 0 });
+    vi::setBlendMode(BlendMode.ALPHA);
 
     crt = vi::newCanvas(WIDTH, HEIGHT);
     for (int y = 0; y < HEIGHT; ++y) {

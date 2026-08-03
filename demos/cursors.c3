@@ -82,13 +82,13 @@ fn void draw(float dt) @export("draw") @wasm {
                     vi::setClipboardText(String.tconcat("cursor: ", Cursors.from_ordinal(row * COLS + col).description));
                 }
                 if (mouseDownState) {
-                    vi::drawRectangle(rect.x, rect.y, RECT_SIZE, RECT_SIZE, (Color) { 255, 69, 200, 255 });
+                    vi::drawRectangleGradientV(rect.x, rect.y, RECT_SIZE, RECT_SIZE, (Color) { 255, 90, 210, 255 }, (Color) { 170, 45, 140, 255 });
                 } else {
-                    vi::drawRectangle(rect.x, rect.y, RECT_SIZE, RECT_SIZE, (Color) { 200, 69, 69, 255 });
+                    vi::drawRectangleGradientV(rect.x, rect.y, RECT_SIZE, RECT_SIZE, (Color) { 215, 80, 80, 255 }, (Color) { 150, 45, 55, 255 });
                 }
                 hoverCursor = true;
             } else {
-                vi::drawRectangle(rect.x, rect.y, RECT_SIZE, RECT_SIZE, (Color) { 200, 69, 69, 255 });
+                vi::drawRectangleGradientV(rect.x, rect.y, RECT_SIZE, RECT_SIZE, (Color) { 215, 80, 80, 255 }, (Color) { 150, 45, 55, 255 });
             }
             if (shouldDrawLabels) {
                 labels.drawText(Cursors.from_ordinal(row * COLS + col).description, rect.x + 1, (int)(rect.y + (RECT_SIZE / 9 * 5.75 + 1)), (Color) { 18, 18, 18, 255 });

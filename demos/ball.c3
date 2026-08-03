@@ -52,7 +52,20 @@ fn void draw(float dt) @export("draw") @wasm {
 	} else {
 		ball_position.y = y;
 	}
-	vi::draw(emoji, 0, 0, emoji.width, emoji.height, (int)ball_position.x, (int)ball_position.y);
+	// Squash on impact and let it spring back: the sprite is blitted into a
+	// wider, shorter rectangle that stays anchored to its bottom edge.
+	float squash = hitTime > 0.2f ? 0.2f : hitTime;
+	int width = (int)((float)emoji.width * (1.0f + squash * 1.2f));
+	int height = (int)((float)emoji.height * (1.0f - squash * 0.8f));
+	int posX = (int)ball_position.x - (width - (int)emoji.width) / 2;
+	int posY = (int)ball_position.y + ((int)emoji.height - height);
+	vi::drawEx(
+		emoji,
+		(IntVector4) { 0, 0, (int)emoji.width, (int)emoji.height },
+		(IntVector4) { posX, posY, width, height },
+		false,
+		false
+	);
 }
 
 fn void main() @export("main") @wasm {
